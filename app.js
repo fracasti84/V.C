@@ -1089,9 +1089,18 @@ function settleBotTrade(trade, price, dig) {
     botLog(`LOSS ${fmt(-trade.stake).split(" ")[0]} | P/L: ${fmt(b.pl).split(" ")[0]}`, "loss");
   }
 
-  // update P/L display
+  // update P/L display with pop animation
   el.botPL.textContent = fmt(b.pl).split(" ")[0];
   el.botPL.className = b.pl >= 0 ? "profit" : "loss";
+  el.botPL.classList.remove("pl-pop");
+  void el.botPL.offsetWidth;
+  el.botPL.classList.add("pl-pop");
+
+  // live trade card + progress bars + sound
+  addBotTradeCard(won, trade.label, trade.stake, profit, b.pl);
+  updateBotProgressBars();
+  playSound(won ? "win" : "loss");
+  showCelebration(Math.abs(profit), won);
 
   // add to journal
   addJournalEntry({
@@ -1443,6 +1452,8 @@ function startBot() {
   el.botStatusLabel.style.color = "var(--green)";
   botLog(`Bot started. Strategy: ${b.strategy} | Market: ${marketName(b.market)}`, "signal");
   updateBotFlow();
+  updateBotProgressBars();
+  startSessionTimer();
 
   // ensure ticks are flowing for bot market
   if (st.wsReady && b.market !== st.symbol) subscribeTicks(b.market);
@@ -1457,6 +1468,7 @@ function stopBot() {
   el.botStatusLabel.style.color = "var(--muted)";
   botLog("Bot stopped.");
   updateBotFlow();
+  stopSessionTimer();
 }
 
 function resetBotStats() {
@@ -1464,6 +1476,11 @@ function resetBotStats() {
   b.runs=0; b.wins=0; b.losses=0; b.pl=0; b.consecutiveLosses=0; b.currentStake=b.stake;
   el.botRunCount.textContent="0"; el.botWinCount.textContent="0";
   el.botLossCount.textContent="0"; el.botPL.textContent="0.00"; el.botPL.className="";
+  const feed = $("botTradeFeed");
+  if (feed) feed.innerHTML = `<div class="btf-empty">No trades yet — start the bot to see live results</div>`;
+  const timer = $("botSessionTimer");
+  if (timer) timer.textContent = "00:00:00";
+  updateBotProgressBars();
   botLog("Stats reset.");
 }
 
@@ -1799,6 +1816,82 @@ function showCelebration(profit, won) {
 
   setTimeout(() => toast.classList.add("show"), 10);
   celebTimer = setTimeout(() => toast.classList.remove("show"), 3800);
+}
+
+// ── SESSION TIMER ────────────────────────────────────────────
+let sessionTimer = null, sessionStart = 0;
+function startSessionTimer() {
+  sessionStart = Date.now();
+  clearInterval(sessionTimer);
+  sessionTimer = setInterval(() => {
+    const el2 = $("botSessionTimer");
+    if (!el2) return;
+    const s = Math.floor((Date.now() - sessionStart) / 1000);
+    const h = String(Math.floor(s / 3600)).padStart(2, "0");
+    const m = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+    const sec = String(s % 60).padStart(2, "0");
+    el2.textContent = `${h}:${m}:${sec}`;
+  }, 1000);
+}
+function stopSessionTimer() {
+  clearInterval(sessionTimer);
+  sessionTimer = null;
+}
+
+// ── SOUND ALERTS ─────────────────────────────────────────────
+function playSound(type) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+    if (type === "win") {
+      osc.frequency.setValueAtTime(523, ctx.currentTime);
+      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.2);
+    } else {
+      osc.frequency.setValueAtTime(350, ctx.currentTime);
+      osc.frequency.setValueAtTime(280, ctx.currentTime + 0.18);
+    }
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.45);
+  } catch(e) {}
+}
+
+// ── LIVE TRADE FEED ──────────────────────────────────────────
+function addBotTradeCard(won, tradeLabel, stake, profit, cumPL) {
+  const feed = $("botTradeFeed");
+  if (!feed) return;
+  // Remove empty state
+  const empty = feed.querySelector(".btf-empty");
+  if (empty) empty.remove();
+
+  const card = document.createElement("div");
+  card.className = `btf-card ${won ? "win" : "loss"}`;
+  const plSign = won ? "+" : "-";
+  card.innerHTML = `
+    <div class="btf-badge ${won ? "win" : "loss"}">${won ? "WIN" : "LOSS"}</div>
+    <div class="btf-info"><strong>${tradeLabel}</strong>Stake: ${fmt(stake).split(" ")[0]}</div>
+    <div class="btf-pl ${won ? "win" : "loss"}">${plSign}${fmt(Math.abs(profit)).split(" ")[0]}</div>
+    <div class="btf-cumpl">P/L<br>${cumPL >= 0 ? "+" : ""}${fmt(cumPL).split(" ")[0]}</div>`;
+  feed.prepend(card);
+  if (feed.children.length > 30) feed.lastChild.remove();
+}
+
+// ── BOT PROGRESS BARS ────────────────────────────────────────
+function updateBotProgressBars() {
+  const b = st.bot;
+  const tPct = Math.min(100, b.targetProfit > 0 ? (Math.max(0, b.pl) / b.targetProfit) * 100 : 0);
+  const lPct = Math.min(100, b.lossLimit > 0 ? (Math.max(0, -b.pl) / b.lossLimit) * 100 : 0);
+  const tBar = $("botTargetBar"), lBar = $("botLossBar");
+  const tPctEl = $("botTargetPct"), lPctEl = $("botLossPct");
+  if (tBar) tBar.style.width = tPct.toFixed(1) + "%";
+  if (lBar) lBar.style.width = lPct.toFixed(1) + "%";
+  if (tPctEl) tPctEl.textContent = tPct.toFixed(0) + "%";
+  if (lPctEl) lPctEl.textContent = lPct.toFixed(0) + "%";
 }
 
 // ── BOT FLOW UPDATER ─────────────────────────────────────────

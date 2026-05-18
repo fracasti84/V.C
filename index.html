@@ -78,7 +78,7 @@
 
         <nav class="main-nav" id="mainNav" role="tablist">
           <button class="nav-tab active" data-tab="analysis" role="tab" aria-selected="true">Analysis</button>
-          <button class="nav-tab" data-tab="bot" role="tab">Bot Builder</button>
+          <button class="nav-tab" data-tab="bot" role="tab">MoneyMeka Bot</button>
           <button class="nav-tab" data-tab="strategies" role="tab">Strategies</button>
           <button class="nav-tab" data-tab="calculator" role="tab">Risk Calc</button>
           <button class="nav-tab" data-tab="journal" role="tab">Journal</button>
@@ -482,6 +482,31 @@
               </button>
               <button id="botResetBtn" class="secondary-button" type="button">Reset stats</button>
             </div>
+
+            <!-- LIVE RESULTS PANEL -->
+            <section class="panel bot-results-section">
+              <div class="panel-heading">
+                <h2>Live results</h2>
+                <span class="session-timer-badge" title="Session duration">
+                  <span id="botSessionTimer">00:00:00</span>
+                </span>
+              </div>
+              <div class="bot-progress-bars">
+                <div class="bpb-row">
+                  <span class="bpb-label">Target</span>
+                  <div class="bpb-track"><div id="botTargetBar" class="bpb-fill target" style="width:0%"></div></div>
+                  <span id="botTargetPct" class="bpb-pct">0%</span>
+                </div>
+                <div class="bpb-row">
+                  <span class="bpb-label">Loss limit</span>
+                  <div class="bpb-track"><div id="botLossBar" class="bpb-fill loss-bar" style="width:0%"></div></div>
+                  <span id="botLossPct" class="bpb-pct">0%</span>
+                </div>
+              </div>
+              <div id="botTradeFeed" class="bot-trade-feed">
+                <div class="btf-empty">No trades yet — start the bot to see live results</div>
+              </div>
+            </section>
 
             <div class="panel">
               <div class="panel-heading"><h2>Bot log</h2><button id="clearBotLog" class="text-button" type="button">Clear</button></div>

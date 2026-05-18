@@ -1050,6 +1050,59 @@ body.light .bot-center .panel { background: rgba(255,255,255,.96); }
 .bfb-value { font-size: 11px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bot-flow-arrow { flex-shrink: 0; padding: 0 5px; color: var(--muted); font-size: 16px; margin-bottom: 4px; }
 
+/* ── SESSION TIMER ──────────────────────────────────────────── */
+.session-timer-badge {
+  font-family: "Courier New", monospace;
+  font-size: 13px; font-weight: 700;
+  color: var(--text);
+  background: var(--surface-3); border: 1px solid var(--line-soft);
+  padding: 2px 10px; border-radius: 6px;
+  letter-spacing: .08em;
+}
+
+/* ── PROGRESS BARS ──────────────────────────────────────────── */
+.bot-progress-bars { display: grid; gap: 8px; margin-bottom: 12px; }
+.bpb-row { display: grid; grid-template-columns: 68px 1fr 36px; align-items: center; gap: 8px; }
+.bpb-label { font-size: 11px; color: var(--muted); }
+.bpb-track { height: 7px; border-radius: 999px; background: var(--surface-3); border: 1px solid var(--line-soft); overflow: hidden; }
+.bpb-fill { height: 100%; border-radius: inherit; transition: width .4s ease; }
+.bpb-fill.target { background: linear-gradient(90deg, var(--green), #1dd98b); }
+.bpb-fill.loss-bar { background: linear-gradient(90deg, var(--amber), var(--red)); }
+.bpb-pct { font-size: 11px; font-weight: 700; color: var(--text); text-align: right; }
+
+/* ── LIVE TRADE RESULT CARDS ────────────────────────────────── */
+.bot-results-section { }
+.bot-trade-feed { display: grid; gap: 6px; max-height: 240px; overflow-y: auto; }
+.btf-empty { font-size: 12px; color: var(--muted); padding: 8px 0; text-align: center; }
+.btf-card {
+  display: grid;
+  grid-template-columns: 44px 1fr auto auto;
+  align-items: center; gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px; border: 1px solid var(--line-soft);
+  font-size: 12px;
+  animation: btfSlideIn .28s ease;
+}
+@keyframes btfSlideIn { from { opacity:0; transform:translateX(16px); } to { opacity:1; transform:translateX(0); } }
+.btf-card.win { background: var(--green-dim); border-color: rgba(25,195,125,.35); }
+.btf-card.loss { background: var(--red-dim); border-color: rgba(255,80,96,.35); }
+.btf-badge {
+  font-size: 9px; font-weight: 800; text-align: center;
+  padding: 3px 0; border-radius: 5px; text-transform: uppercase; letter-spacing: .04em;
+}
+.btf-badge.win { background: var(--green); color: #021a0b; }
+.btf-badge.loss { background: var(--red); color: #fff; }
+.btf-info { color: var(--muted); font-size: 11px; }
+.btf-info strong { color: var(--text); font-size: 12px; display: block; }
+.btf-pl { font-size: 15px; font-weight: 800; }
+.btf-pl.win { color: var(--green); }
+.btf-pl.loss { color: var(--red); }
+.btf-cumpl { font-size: 10px; color: var(--muted); text-align: right; }
+
+/* P/L flash animation on update */
+@keyframes plFlash { 0%{transform:scale(1)} 40%{transform:scale(1.18)} 100%{transform:scale(1)} }
+.pl-pop { animation: plFlash .28s ease; }
+
 /* ── BOT RUN BRANDED BUTTON ─────────────────────────────────── */
 .bot-run-btn.branded {
   background: linear-gradient(135deg, #19c37d 0%, #4f8cff 100%);
