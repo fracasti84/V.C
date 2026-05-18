@@ -1456,8 +1456,75 @@ function resetBotStats() {
 }
 
 // ── OAUTH ─────────────────────────────────────────────────────
-function extractOauthToken() {
+async function generatePKCE() {
+  const array = crypto.getRandomValues(new Uint8Array(64));
+  const codeVerifier = Array.from(array)
+    .map(v => "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"[v % 66])
+    .join("");
+  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(codeVerifier));
+  const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(hash)))
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const state = crypto.getRandomValues(new Uint8Array(16))
+    .reduce((s, b) => s + b.toString(16).padStart(2, "0"), "");
+  return { codeVerifier, codeChallenge, state };
+}
+
+async function redirectToOAuth() {
+  const { codeVerifier, codeChallenge, state } = await generatePKCE();
+  sessionStorage.setItem("pkce_code_verifier", codeVerifier);
+  sessionStorage.setItem("oauth_state", state);
+  const params = new URLSearchParams({
+    response_type: "code",
+    client_id: st.appId,
+    redirect_uri: "https://moneymekapro.com",
+    scope: "trade account_manage",
+    state,
+    code_challenge: codeChallenge,
+    code_challenge_method: "S256"
+  });
+  window.location.href = `https://auth.deriv.com/oauth2/auth?${params}`;
+}
+
+async function extractOauthToken() {
   const q = new URLSearchParams(window.location.search);
+  const code = q.get("code");
+  const returnedState = q.get("state");
+
+  if (code) {
+    const storedState = sessionStorage.getItem("oauth_state");
+    const codeVerifier = sessionStorage.getItem("pkce_code_verifier");
+    window.history.replaceState({}, document.title, window.location.pathname);
+    sessionStorage.removeItem("oauth_state");
+    sessionStorage.removeItem("pkce_code_verifier");
+
+    if (storedState && returnedState !== storedState) {
+      log("OAuth state mismatch — aborting.");
+      return;
+    }
+
+    log("OAuth code received. Exchanging for token…");
+    try {
+      const resp = await fetch("/.netlify/functions/token-exchange", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, code_verifier: codeVerifier, redirect_uri: "https://moneymekapro.com" })
+      });
+      const data = await resp.json();
+      if (data.access_token) {
+        st.token = data.access_token;
+        localStorage.setItem("mm.token", data.access_token);
+        log("Token obtained. Connecting…");
+        connectDeriv();
+      } else {
+        log("Token exchange failed: " + (data.error_description || data.error || JSON.stringify(data)));
+      }
+    } catch (err) {
+      log("Token exchange error: " + err.message);
+    }
+    return;
+  }
+
+  // Legacy fallback
   const h = new URLSearchParams(window.location.hash.replace(/^#/,""));
   const token = q.get("token1")||h.get("token1");
   const login = q.get("acct1")||h.get("acct1");
@@ -1490,10 +1557,7 @@ function bindEvents() {
   // landing overlay
   const landingOauthBtn = $("landingOauthBtn");
   const landingDemoBtn  = $("landingDemoBtn");
-  if (landingOauthBtn) landingOauthBtn.addEventListener("click", () => {
-    const id = el.appIdInput?.value?.trim() || st.appId;
-    window.location.href = `https://oauth.deriv.com/oauth2/authorize?app_id=${encodeURIComponent(id)}&l=EN`;
-  });
+  if (landingOauthBtn) landingOauthBtn.addEventListener("click", () => redirectToOAuth());
   if (landingDemoBtn) landingDemoBtn.addEventListener("click", () => {
     hideLanding();
     log("Demo mode active. All trades are paper trades.");
@@ -1514,10 +1578,7 @@ function bindEvents() {
 
   // connection
   el.settingsBtn.addEventListener("click",()=>el.settingsDialog.showModal());
-  el.connectBtn.addEventListener("click",()=>{
-    const id = el.appIdInput?.value?.trim() || st.appId;
-    window.location.href = `https://oauth.deriv.com/oauth2/authorize?app_id=${encodeURIComponent(id)}&l=EN`;
-  });
+  el.connectBtn.addEventListener("click", () => redirectToOAuth());
   if (el.disconnectBtn) el.disconnectBtn.addEventListener("click",()=>{
     st.token = ""; st.isAuthorized = false; st.loginId = "";
     localStorage.removeItem("mm.token");
@@ -1525,11 +1586,7 @@ function bindEvents() {
     updateModeUi();
     showLanding();
   });
-  el.oauthBtn.addEventListener("click",()=>{
-    const id = el.appIdInput.value.trim() || st.appId;
-    window.location.href = `https://oauth.deriv.com/oauth2/authorize?app_id=${encodeURIComponent(id)}&l=EN`;
-    log("Redirecting to Deriv OAuth…");
-  });
+  el.oauthBtn.addEventListener("click", () => { redirectToOAuth(); log("Redirecting to Deriv OAuth…"); });
   el.saveSettingsBtn.addEventListener("click",()=>{
     st.appId = el.appIdInput.value.trim()||"1089";
     st.token = el.tokenInput.value.trim();
@@ -1621,8 +1678,8 @@ function bindEvents() {
 }
 
 // ── INIT ──────────────────────────────────────────────────────
-function init() {
-  extractOauthToken();
+async function init() {
+  await extractOauthToken();
   initTheme();
   if (!st.token) showLanding();
   el.appIdInput.value = st.appId;
