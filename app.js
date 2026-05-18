@@ -17,7 +17,7 @@ const CONTRACT_LABELS = {
 
 // ── STATE ───────────────────────────────────────────────────
 const st = {
-  appId: localStorage.getItem("mm.appId") || "33iZljc09mR2ZlLqP8QET",
+  appId: localStorage.getItem("mm.appId") || "33j3KnddANLxl1PUwgCYq",
   token: localStorage.getItem("mm.token") || "",
   markup: Number(localStorage.getItem("mm.markup") ?? 3),
   ws: null, wsReady: false, isAuthorized: false,
