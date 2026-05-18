@@ -1476,7 +1476,7 @@ async function redirectToOAuth() {
   const params = new URLSearchParams({
     response_type: "code",
     client_id: st.appId,
-    redirect_uri: "https://moneymekapro.com",
+    redirect_uri: "https://moneymekapro.com/callback",
     scope: "trade account_manage",
     state,
     code_challenge: codeChallenge,
@@ -1507,7 +1507,7 @@ async function extractOauthToken() {
       const resp = await fetch("/.netlify/functions/token-exchange", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, code_verifier: codeVerifier, redirect_uri: "https://moneymekapro.com" })
+        body: JSON.stringify({ code, code_verifier: codeVerifier, redirect_uri: "https://moneymekapro.com/callback" })
       });
       const data = await resp.json();
       if (data.access_token) {

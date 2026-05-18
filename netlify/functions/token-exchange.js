@@ -24,7 +24,7 @@ exports.handler = async (event) => {
       statusCode: response.status,
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "https://moneymekapro.com"
+        "Access-Control-Allow-Origin": "https://moneymekapro.com/callback"
       },
       body: JSON.stringify(data)
     };
