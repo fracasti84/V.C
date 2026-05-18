@@ -794,6 +794,18 @@ function computeMarketMood(w) {
   return variance < 5 ? "ranging" : "volatile";
 }
 
+function getBestMarketForStrat(strat) {
+  let bestSym = null, bestScore = -1;
+  for (const [sym, arr] of Object.entries(st.ticksAll)) {
+    if (!arr || arr.length < 100) continue;
+    const w2 = arr.slice(-Math.min(arr.length, st.tickWindow));
+    const sc = computeStrategyScore(strat, computeDigitStats(w2));
+    if (sc > bestScore) { bestScore = sc; bestSym = sym; }
+  }
+  if (!bestSym) return null;
+  return { sym: bestSym, name: MARKETS[bestSym] || bestSym, score: bestScore };
+}
+
 function getAIRecommendation(stats, w) {
   const strats = ["over123","under876","odd","even","hitrun"];
   const scores = {};
@@ -806,7 +818,8 @@ function getAIRecommendation(stats, w) {
     const best = scores["odd"] >= scores["even"] ? "odd" : "even";
     if (scores[best] >= 55) recommended = best;
   }
-  return { recommended, confidence: scores[recommended], scores, mood };
+  const bestMarket = getBestMarketForStrat(recommended);
+  return { recommended, confidence: scores[recommended], scores, mood, bestMarket };
 }
 
 function renderAIAdvisor(stats, w) {
@@ -820,6 +833,17 @@ function renderAIAdvisor(stats, w) {
   el.aiRecStrategy.textContent = stratLabels[rec.recommended] || rec.recommended;
   el.aiConfidenceFill.style.width = rec.confidence + "%";
   el.aiConfidenceText.textContent = rec.confidence + "%";
+
+  // Best market for recommended signal
+  const mktEl = $("aiRecMarket");
+  const mktRow = $("aiMarketRow");
+  if (rec.bestMarket && mktEl) {
+    mktEl.textContent = rec.bestMarket.name;
+    const isCurrent = rec.bestMarket.sym === st.symbol;
+    mktEl.style.color = isCurrent ? "var(--muted)" : "var(--amber)";
+    if (mktRow) mktRow.style.display = isCurrent ? "none" : "";
+  }
+
   el.aiScoresGrid.innerHTML = "";
   ["over123","under876","odd","even","hitrun"].forEach(s => {
     const sc = rec.scores[s];
@@ -867,6 +891,23 @@ function runBotEngine(price) {
   if (b.pl >= b.targetProfit) {
     botLog(`Target profit reached ($${b.targetProfit}). Bot stopped.`,"win");
     stopBot(); return;
+  }
+
+  // AI Auto: auto-switch to best market every 20 ticks when idle
+  if (b.strategy === "aiAuto" && !b.pendingTrade && !b.entryWatch) {
+    b._aiSwitchCooldown = (b._aiSwitchCooldown || 0) - 1;
+    if (b._aiSwitchCooldown <= 0 && st.aiRec?.bestMarket) {
+      const bestSym = st.aiRec.bestMarket.sym;
+      if (bestSym !== b.market) {
+        b.market = bestSym;
+        b._aiSwitchCooldown = 20;
+        botLog(`AI switching market → ${st.aiRec.bestMarket.name} (${st.aiRec.confidence}% confidence)`, "signal");
+        updateBotFlow();
+        if (st.wsReady && bestSym !== st.symbol) {
+          send({ ticks: bestSym, subscribe: 1 });
+        }
+      }
+    }
   }
 
   // check entry
@@ -1592,13 +1633,20 @@ function bindEvents() {
     log("Demo mode active. All trades are paper trades.");
   });
 
-  // AI apply button
+  // AI apply button — sets both strategy AND best market
   const aiApplyBtn = $("aiApplyBtn");
   if (aiApplyBtn) aiApplyBtn.addEventListener("click", () => {
     if (!st.aiRec) return;
     const strat = st.aiRec.recommended;
     document.querySelectorAll("input[name=botStrat]").forEach(r => { r.checked = r.value === strat; });
-    botLog(`AI applied: ${strat} (confidence ${st.aiRec.confidence}%)`, "signal");
+    const bm = st.aiRec.bestMarket;
+    if (bm && el.botMarket) {
+      el.botMarket.value = bm.sym;
+      botLog(`AI applied: ${STRAT_LABELS[strat] || strat} on ${bm.name} (confidence ${st.aiRec.confidence}%)`, "signal");
+    } else {
+      botLog(`AI applied: ${STRAT_LABELS[strat] || strat} (confidence ${st.aiRec.confidence}%)`, "signal");
+    }
+    updateBotFlow();
   });
 
   // theme toggle
