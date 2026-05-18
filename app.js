@@ -263,6 +263,7 @@ function connectDeriv() {
     subscribeTicks(st.symbol);
     send({ active_symbols:"brief", product_type:"basic" });
     if (st.token) send({ authorize: st.token });
+    setTimeout(subscribeTickerSyms, 1500);
   };
 
   st.ws.onmessage = ev => {
@@ -324,6 +325,8 @@ function subscribeTicks(sym) {
   send({ ticks: sym, subscribe:1 });
   send({ ticks_history: sym, adjust_start_time:1, count:Math.min(st.tickWindow+50,5000), end:"latest", start:1, style:"ticks" });
   ticks(sym).length = 0;
+  // Resubscribe ticker extra symbols
+  setTimeout(() => subscribeTickerSyms(), 500);
 }
 
 function hydrateHistory(h) {
@@ -370,6 +373,7 @@ function onTick(price, sym, ts) {
     if (st.wsReady) refreshProposal();
   }
   updateBotDigitFeed(price);
+  scheduleTickerUpdate();
 }
 
 // ── RENDERING ────────────────────────────────────────────────
@@ -408,11 +412,12 @@ function drawChart(w) {
   ctx.clearRect(0,0,W,H);
 
   // background
-  ctx.fillStyle = "#05080d";
+  const isLight = document.body.classList.contains("light");
+  ctx.fillStyle = isLight ? "#f8f9fb" : "#05080d";
   ctx.fillRect(0,0,W,H);
 
   // grid
-  ctx.strokeStyle = "rgba(36,46,63,.6)"; ctx.lineWidth = 1;
+  ctx.strokeStyle = isLight ? "rgba(180,195,215,.7)" : "rgba(36,46,63,.6)"; ctx.lineWidth = 1;
   for (let x=0; x<W; x+=60) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
   for (let y=0; y<H; y+=40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
 
@@ -448,7 +453,7 @@ function drawChart(w) {
   ctx.fillStyle="rgba(25,195,125,.25)"; ctx.beginPath(); ctx.arc(lx,ly,10,0,Math.PI*2); ctx.fill();
 
   // price labels
-  ctx.fillStyle="#8a97ad"; ctx.font="11px system-ui";
+  ctx.fillStyle = isLight ? "#5a6474" : "#8a97ad"; ctx.font="11px system-ui";
   ctx.fillText(mx.toFixed(2),8,20); ctx.fillText(mn.toFixed(2),8,H-10);
 }
 
@@ -466,7 +471,7 @@ function drawDigitView(ctx, vis, W, H) {
       ctx.strokeRect(x,H-barH,Math.max(2,cw-1),barH);
     }
   });
-  ctx.fillStyle="#eef3fb"; ctx.font="13px system-ui"; ctx.fillText("Digit view",16,24);
+  ctx.fillStyle = document.body.classList.contains("light") ? "#0d1117" : "#eef3fb"; ctx.font="13px system-ui"; ctx.fillText("Digit view",16,24);
 }
 
 // ── DIGIT ANALYSIS ───────────────────────────────────────────
@@ -1177,6 +1182,7 @@ function settlePaperTrades(price) {
     trade.profit = payout - trade.stake;
     st.paperBalance += payout;
     log(`${won?"WIN":"LOSS"} ${trade.label} P/L ${fmt(trade.profit)}`, won?"profit":"loss");
+    showCelebration(Math.abs(trade.profit), won);
     addJournalEntry({
       time: new Date().toLocaleTimeString(),
       market: marketName(trade.symbol),
@@ -1260,13 +1266,17 @@ function updateModeUi() {
   el.balanceValue.textContent = fmt(realReady ? st.balance : st.paperBalance);
   el.botBalance.textContent = st.isAuthorized ? fmt(st.balance) : "Paper";
   if (el.topbarBalance && el.topbarBalanceValue) {
+    const lbl = el.topbarBalance.querySelector(".topbar-balance-label");
     if (st.isAuthorized) {
       el.topbarBalanceValue.textContent = fmt(st.balance);
+      if (lbl) lbl.textContent = "Balance";
       el.topbarBalance.style.display = "";
       el.connectBtn.style.display = "none";
       if (el.disconnectBtn) el.disconnectBtn.style.display = "";
     } else {
-      el.topbarBalance.style.display = "none";
+      el.topbarBalanceValue.textContent = fmt(st.paperBalance);
+      if (lbl) lbl.textContent = "Paper";
+      el.topbarBalance.style.display = "";
       el.connectBtn.style.display = "";
       if (el.disconnectBtn) el.disconnectBtn.style.display = "none";
     }
@@ -1432,6 +1442,7 @@ function startBot() {
   el.botStatusLabel.textContent = "Running";
   el.botStatusLabel.style.color = "var(--green)";
   botLog(`Bot started. Strategy: ${b.strategy} | Market: ${marketName(b.market)}`, "signal");
+  updateBotFlow();
 
   // ensure ticks are flowing for bot market
   if (st.wsReady && b.market !== st.symbol) subscribeTicks(b.market);
@@ -1445,6 +1456,7 @@ function stopBot() {
   el.botStatusLabel.textContent = "Stopped";
   el.botStatusLabel.style.color = "var(--muted)";
   botLog("Bot stopped.");
+  updateBotFlow();
 }
 
 function resetBotStats() {
@@ -1677,6 +1689,139 @@ function bindEvents() {
   });
 }
 
+// ── TICKER RIBBON ────────────────────────────────────────────
+const TICKER_EXTRA_SYMS = ["R_10", "1HZ25V", "1HZ50V", "R_100", "1HZ100V"];
+
+function subscribeTickerSyms() {
+  if (!st.wsReady) return;
+  TICKER_EXTRA_SYMS.filter(s => s !== st.symbol).forEach(s => {
+    send({ ticks: s, subscribe: 1 });
+  });
+}
+
+let tickerUpdatePending = false;
+function scheduleTickerUpdate() {
+  if (tickerUpdatePending) return;
+  tickerUpdatePending = true;
+  setTimeout(() => { tickerUpdatePending = false; updateTickerRibbon(); }, 2000);
+}
+
+let cryptoPrices = {};
+async function fetchCryptoPrices() {
+  try {
+    const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true");
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d.bitcoin) cryptoPrices["BTC/USD"] = { price: d.bitcoin.usd, change: d.bitcoin.usd_24h_change || 0 };
+    if (d.ethereum) cryptoPrices["ETH/USD"] = { price: d.ethereum.usd, change: d.ethereum.usd_24h_change || 0 };
+    updateTickerRibbon();
+  } catch(e) {}
+}
+
+function updateTickerRibbon() {
+  const inner = $("tickerInner");
+  if (!inner) return;
+
+  const items = [];
+
+  // Crypto prices
+  for (const [key, val] of Object.entries(cryptoPrices)) {
+    if (!val?.price) continue;
+    const chg = val.change || 0;
+    items.push({
+      sym: key,
+      price: val.price > 1000 ? val.price.toLocaleString(undefined, {maximumFractionDigits: 0}) : val.price.toFixed(4),
+      chg: (chg >= 0 ? "+" : "") + chg.toFixed(2) + "%",
+      up: chg >= 0
+    });
+  }
+
+  // Deriv volatility indices from live ticks
+  const symLabels = {
+    "R_10": "Vol 10", "R_25": "Vol 25", "R_50": "Vol 50",
+    "R_75": "Vol 75", "R_100": "Vol 100",
+    "1HZ10V": "Vol 10 (1s)", "1HZ25V": "Vol 25 (1s)", "1HZ50V": "Vol 50 (1s)",
+    "1HZ75V": "Vol 75 (1s)", "1HZ100V": "Vol 100 (1s)"
+  };
+  for (const sym of [...TICKER_EXTRA_SYMS, st.symbol]) {
+    const arr = st.ticksAll[sym];
+    if (!arr || arr.length < 2) continue;
+    const last = arr[arr.length - 1]?.price;
+    const prev = arr[arr.length - 2]?.price;
+    if (!last || !prev) continue;
+    const chg = last - prev;
+    items.push({
+      sym: symLabels[sym] || sym,
+      price: last.toFixed(2),
+      chg: (chg >= 0 ? "+" : "") + chg.toFixed(2),
+      up: chg >= 0
+    });
+  }
+
+  if (!items.length) return;
+
+  // Duplicate for seamless loop
+  const html = [...items, ...items].map(it =>
+    `<div class="ticker-item">
+      <span class="ticker-sym">${it.sym}</span>
+      <span class="ticker-price">${it.price}</span>
+      <span class="ticker-chg ${it.up ? "up" : "down"}">${it.chg}</span>
+    </div>`
+  ).join("");
+
+  inner.innerHTML = html;
+}
+
+// ── WIN / LOSS CELEBRATION ───────────────────────────────────
+let celebTimer = null;
+function showCelebration(profit, won) {
+  const toast = $("celebrationToast");
+  if (!toast) return;
+  clearTimeout(celebTimer);
+
+  const icon   = $("ctIcon");
+  const title  = $("ctTitle");
+  const amount = $("ctAmount");
+  const sub    = $("ctSub");
+
+  if (won) {
+    if (icon)   icon.textContent    = "🎉";
+    if (title)  { title.textContent = "Congratulations! You Won!"; title.className = "ct-title"; }
+    if (amount) { amount.textContent = "+" + fmt(profit); amount.className = "ct-amount"; }
+    toast.className = "celebration-toast";
+  } else {
+    if (icon)   icon.textContent    = "📉";
+    if (title)  { title.textContent = "Trade Closed"; title.className = "ct-title loss"; }
+    if (amount) { amount.textContent = "-" + fmt(Math.abs(profit)); amount.className = "ct-amount loss"; }
+    toast.className = "celebration-toast loss-toast";
+  }
+  if (sub) sub.textContent = "MoneyMeKa Pro";
+
+  setTimeout(() => toast.classList.add("show"), 10);
+  celebTimer = setTimeout(() => toast.classList.remove("show"), 3800);
+}
+
+// ── BOT FLOW UPDATER ─────────────────────────────────────────
+const STRAT_LABELS = {
+  over123: "Over 1/2/3", under876: "Under 8/7/6",
+  odd: "Odd", even: "Even", hitrun: "Hit & Run",
+  manual: "Any tick", aiAuto: "AI Auto"
+};
+
+function updateBotFlow() {
+  const b = st.bot;
+  const setVal = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+  const setActive = (id, on) => { const e = $(id); if (e) e.classList.toggle("active", on); };
+  setVal("bfbMarketVal",  MARKETS[b.market] || b.market);
+  setVal("bfbSignalVal",  b.useStrategy ? (STRAT_LABELS[b.strategy] || b.strategy) : "Any tick");
+  setVal("bfbEntryVal",   "$" + (b.currentStake || b.stake).toFixed(2));
+  setVal("bfbRiskVal",    "$" + b.lossLimit);
+  setVal("bfbStatusVal",  b.running ? "Running" : "Idle");
+  setActive("bfbStatusBlock", b.running);
+  setActive("bfbMarket",  b.running);
+  setActive("bfbSignal",  b.running && b.useStrategy);
+}
+
 // ── INIT ──────────────────────────────────────────────────────
 async function init() {
   await extractOauthToken();
@@ -1699,7 +1844,11 @@ async function init() {
 
   bindEvents();
   renderJournal();
+  updateBotFlow();
   startSim();
+
+  fetchCryptoPrices();
+  setInterval(fetchCryptoPrices, 60000);
 
   log("MoneyMaker Pro loaded. Demo stream active.");
 }

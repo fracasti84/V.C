@@ -935,6 +935,129 @@ body.light .landing-overlay { background: #f0f2f5; }
 .wa-float:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(37,211,102,.6); }
 .wa-float:active { transform: scale(.96); }
 
+/* ── LIGHT THEME COMPREHENSIVE FIX ─────────────────────────── */
+body.light .field { background: #fff; }
+body.light .stat-cell,
+body.light .balance-card,
+body.light .ticket-proposal,
+body.light .tool-button,
+body.light .ctype-btn,
+body.light .trade-item,
+body.light .log-item,
+body.light .bot-log-item,
+body.light .df-chip,
+body.light .d-circle-badge { background: var(--surface-3); }
+body.light .dbar-track,
+body.light .eo-bar-track,
+body.light .ou-bar { background: var(--line); }
+body.light .bot-status-bar,
+body.light .chart-header-bar { background: var(--surface); }
+body.light select.field option { background: #fff; color: var(--text); }
+body.light .topbar { background: rgba(255,255,255,.95); border-bottom-color: var(--line); }
+body.light .panel { background: rgba(255,255,255,.96); }
+body.light .bot-center .panel { background: rgba(255,255,255,.96); }
+
+/* ── TICKER RIBBON ──────────────────────────────────────────── */
+.ticker-ribbon {
+  display: flex; align-items: center;
+  height: 34px; overflow: hidden;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line-soft);
+  flex-shrink: 0;
+}
+.ticker-label {
+  flex-shrink: 0; padding: 0 14px;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: var(--green); border-right: 1px solid var(--line-soft);
+  height: 100%; display: flex; align-items: center;
+  background: var(--green-dim); white-space: nowrap;
+}
+.ticker-track {
+  flex: 1; overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, black 30px, black calc(100% - 30px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 30px, black calc(100% - 30px), transparent);
+}
+.ticker-inner {
+  display: flex; width: max-content;
+  animation: tickerScroll 45s linear infinite;
+}
+.ticker-inner:hover { animation-play-state: paused; }
+@keyframes tickerScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-item {
+  display: flex; align-items: center; gap: 7px;
+  padding: 0 18px; height: 34px;
+  border-right: 1px solid var(--line-soft);
+  white-space: nowrap;
+}
+.ticker-sym { color: var(--muted); font-size: 11px; font-weight: 600; }
+.ticker-price { color: var(--text); font-weight: 700; font-size: 12px; }
+.ticker-chg { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; }
+.ticker-chg.up { color: var(--green); background: var(--green-dim); }
+.ticker-chg.down { color: var(--red); background: var(--red-dim); }
+
+/* ── WIN/LOSS CELEBRATION TOAST ─────────────────────────────── */
+.celebration-toast {
+  position: fixed; top: 80px; right: 22px; z-index: 9990;
+  padding: 20px 24px; border-radius: 16px;
+  background: var(--surface);
+  border: 1.5px solid var(--green);
+  box-shadow: 0 12px 40px rgba(25,195,125,.30), 0 0 0 6px rgba(25,195,125,.07);
+  min-width: 220px;
+  transform: translateX(calc(100% + 44px));
+  transition: transform .4s cubic-bezier(.34,1.56,.64,1);
+  pointer-events: none;
+}
+.celebration-toast.show { transform: translateX(0); }
+.celebration-toast.loss-toast {
+  border-color: var(--red);
+  box-shadow: 0 12px 40px rgba(255,80,96,.20), 0 0 0 6px rgba(255,80,96,.06);
+}
+.ct-icon { font-size: 28px; margin-bottom: 5px; line-height: 1; }
+.ct-title { font-size: 13px; font-weight: 700; color: var(--green); margin-bottom: 3px; }
+.ct-title.loss { color: var(--red); }
+.ct-amount { font-size: 28px; font-weight: 800; color: var(--green); line-height: 1.1; }
+.ct-amount.loss { color: var(--red); }
+.ct-sub { font-size: 10px; color: var(--muted); margin-top: 6px; letter-spacing: .06em; text-transform: uppercase; }
+
+/* ── BOT FLOW VISUALIZER ────────────────────────────────────── */
+.bot-flow {
+  display: flex; align-items: center;
+  gap: 0; margin-bottom: 14px;
+  overflow-x: auto; padding-bottom: 6px;
+}
+.bot-flow-block {
+  flex-shrink: 0; min-width: 110px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-soft);
+  background: var(--surface);
+  transition: border-color .2s, background .2s, box-shadow .2s;
+}
+.bot-flow-block.active {
+  border-color: var(--green); background: var(--green-dim);
+  box-shadow: 0 0 14px rgba(25,195,125,.22);
+}
+.bot-flow-block.active .bfb-title { color: var(--green); }
+.bfb-icon { font-size: 17px; margin-bottom: 3px; line-height: 1; }
+.bfb-title {
+  font-size: 9px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .07em; margin-bottom: 3px;
+}
+.bfb-value { font-size: 11px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bot-flow-arrow { flex-shrink: 0; padding: 0 5px; color: var(--muted); font-size: 16px; margin-bottom: 4px; }
+
+/* ── BOT RUN BRANDED BUTTON ─────────────────────────────────── */
+.bot-run-btn.branded {
+  background: linear-gradient(135deg, #19c37d 0%, #4f8cff 100%);
+  color: #fff; letter-spacing: .01em;
+}
+.bot-run-btn.branded:not(:disabled):hover { background: linear-gradient(135deg, #1dd98b 0%, #5f9cff 100%); }
+.bot-run-btn.branded:disabled { opacity: .5; }
+
 /* ── PLATFORM FEE ────────────────────────────────────────── */
 .fee-row {
   display: flex; justify-content: space-between; align-items: center;
