@@ -80,6 +80,10 @@
             <span id="streamStateLabel">Offline</span>
           </div>
           <div class="account-pill" id="accountStatus">Demo mode</div>
+          <div class="topbar-balance" id="topbarBalance" style="display:none">
+            <span class="topbar-balance-label">Balance</span>
+            <strong id="topbarBalanceValue">0.00 USD</strong>
+          </div>
           <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light/dark theme">
             <svg id="themeIcon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 2a5 5 0 1 1 0 10A5 5 0 0 1 8 3zm0 1.5A3.5 3.5 0 1 0 8 12 3.5 3.5 0 0 0 8 4.5z" opacity=".4"/><circle cx="8" cy="8" r="2.5"/></svg>
           </button>
@@ -87,6 +91,7 @@
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0 1.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/><path fill-rule="evenodd" d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 1.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11z" opacity=".4"/></svg>
           </button>
           <button class="primary-button" id="connectButton" type="button">Connect Deriv</button>
+          <button class="danger-button" id="disconnectButton" type="button" style="display:none">Disconnect</button>
         </div>
       </header>
 

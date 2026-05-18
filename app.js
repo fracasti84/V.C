@@ -82,6 +82,9 @@ function windowTicks(sym) {
 const $ = id => document.getElementById(id);
 const el = {
   connectBtn: $("connectButton"),
+  disconnectBtn: $("disconnectButton"),
+  topbarBalance: $("topbarBalance"),
+  topbarBalanceValue: $("topbarBalanceValue"),
   accountStatus: $("accountStatus"),
   streamBadge: $("streamBadge"),
   statusDot: $("statusDot"),
@@ -1256,6 +1259,18 @@ function updateModeUi() {
   el.buyButton.classList.toggle("real-ready", realReady);
   el.balanceValue.textContent = fmt(realReady ? st.balance : st.paperBalance);
   el.botBalance.textContent = st.isAuthorized ? fmt(st.balance) : "Paper";
+  if (el.topbarBalance && el.topbarBalanceValue) {
+    if (st.isAuthorized) {
+      el.topbarBalanceValue.textContent = fmt(st.balance);
+      el.topbarBalance.style.display = "";
+      el.connectBtn.style.display = "none";
+      if (el.disconnectBtn) el.disconnectBtn.style.display = "";
+    } else {
+      el.topbarBalance.style.display = "none";
+      el.connectBtn.style.display = "";
+      if (el.disconnectBtn) el.disconnectBtn.style.display = "none";
+    }
+  }
 }
 
 function updateMarketUi() {
@@ -1476,10 +1491,8 @@ function bindEvents() {
   const landingOauthBtn = $("landingOauthBtn");
   const landingDemoBtn  = $("landingDemoBtn");
   if (landingOauthBtn) landingOauthBtn.addEventListener("click", () => {
-    hideLanding();
-    const id = el.appIdInput.value.trim() || st.appId;
-    window.open(`https://oauth.deriv.com/oauth2/authorize?app_id=${encodeURIComponent(id)}&l=EN`, "_blank", "noopener");
-    log("Opened Deriv OAuth — connect your account then paste the token in Settings.");
+    const id = el.appIdInput?.value?.trim() || st.appId;
+    window.location.href = `https://oauth.deriv.com/oauth2/authorize?app_id=${encodeURIComponent(id)}&l=EN`;
   });
   if (landingDemoBtn) landingDemoBtn.addEventListener("click", () => {
     hideLanding();
@@ -1501,11 +1514,21 @@ function bindEvents() {
 
   // connection
   el.settingsBtn.addEventListener("click",()=>el.settingsDialog.showModal());
-  el.connectBtn.addEventListener("click",connectDeriv);
+  el.connectBtn.addEventListener("click",()=>{
+    const id = el.appIdInput?.value?.trim() || st.appId;
+    window.location.href = `https://oauth.deriv.com/oauth2/authorize?app_id=${encodeURIComponent(id)}&l=EN`;
+  });
+  if (el.disconnectBtn) el.disconnectBtn.addEventListener("click",()=>{
+    st.token = ""; st.isAuthorized = false; st.loginId = "";
+    localStorage.removeItem("mm.token");
+    disconnectDeriv(true);
+    updateModeUi();
+    showLanding();
+  });
   el.oauthBtn.addEventListener("click",()=>{
     const id = el.appIdInput.value.trim() || st.appId;
-    window.open(`https://oauth.deriv.com/oauth2/authorize?app_id=${encodeURIComponent(id)}&l=EN`,"_blank","noopener");
-    log("Opened Deriv OAuth page.");
+    window.location.href = `https://oauth.deriv.com/oauth2/authorize?app_id=${encodeURIComponent(id)}&l=EN`;
+    log("Redirecting to Deriv OAuth…");
   });
   el.saveSettingsBtn.addEventListener("click",()=>{
     st.appId = el.appIdInput.value.trim()||"1089";

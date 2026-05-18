@@ -109,6 +109,17 @@ p { margin: 0; }
   white-space: nowrap;
 }
 
+.topbar-balance {
+  display: flex; flex-direction: column; align-items: flex-end;
+  padding: 4px 12px; border: 1px solid var(--green);
+  border-radius: var(--radius); background: rgba(25,195,125,.08);
+  line-height: 1.2;
+}
+.topbar-balance-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.topbar-balance strong { font-size: 14px; color: var(--green); font-weight: 700; }
+.danger-button { min-height: 36px; padding: 0 14px; border: 1px solid #e05; border-radius: var(--radius); background: transparent; color: #e05; font-weight: 700; font-size: 13px; cursor: pointer; }
+.danger-button:hover { background: rgba(238,0,85,.1); }
+
 /* ─── BUTTONS ─────────────────────────────────────────────── */
 .primary-button, .secondary-button {
   min-height: 36px; padding: 0 14px;
