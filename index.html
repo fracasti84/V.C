@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MoneyMaker Pro | Advanced Deriv Trading Terminal</title>
+    <meta name="description" content="MoneyMaker Pro — AI-powered Deriv synthetics terminal with live tick analysis, smart strategy signals, and automated bot trading." />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+
+    <!-- LANDING OVERLAY -->
+    <div id="landingOverlay" class="landing-overlay">
+      <div class="lbg-circle c1"></div>
+      <div class="lbg-circle c2"></div>
+      <div class="lbg-circle c3"></div>
+      <div class="landing-card">
+        <div class="landing-brand-row">
+          <div class="brand-mark" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2L4 7v8l7 5 7-5V7L11 2z" stroke="#19c37d" stroke-width="1.8" fill="none"/><path d="M11 6l-4 3v4l4 3 4-3V9l-4-3z" fill="#19c37d" opacity=".4"/><circle cx="11" cy="12" r="2" fill="#19c37d"/></svg>
+          </div>
+          <div>
+            <h1 class="landing-title">MoneyMeKa <span class="brand-pro">Pro</span></h1>
+            <p class="landing-subtitle">moneymekapro.com — Deriv Trading Terminal</p>
+          </div>
+        </div>
+        <p class="landing-headline">Trade Smarter. Automate Entry.<br>Let AI Pick Your Strategy.</p>
+        <div class="landing-stats-row">
+          <div class="lst-cell"><strong>5</strong><span>Strategies</span></div>
+          <div class="lst-divider"></div>
+          <div class="lst-cell"><strong>AI</strong><span>Auto-Select</span></div>
+          <div class="lst-divider"></div>
+          <div class="lst-cell"><strong>Live</strong><span>Tick Feed</span></div>
+          <div class="lst-divider"></div>
+          <div class="lst-cell"><strong>Free</strong><span>To Use</span></div>
+        </div>
+        <div class="landing-feats">
+          <div class="lf-item"><span class="lf-check">✓</span> Real-time digit distribution — 4-color rank system</div>
+          <div class="lf-item"><span class="lf-check">✓</span> 5 proven strategies with live entry signal monitoring</div>
+          <div class="lf-item"><span class="lf-check">✓</span> AI advisor scores every signal &amp; auto-selects best entry</div>
+          <div class="lf-item"><span class="lf-check">✓</span> Automated bot with martingale recovery &amp; stop-loss</div>
+        </div>
+        <div class="landing-ctas">
+          <button id="landingOauthBtn" class="landing-primary-btn">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><path d="M9 2a7 7 0 1 0 0 14A7 7 0 0 0 9 2zm0 2a5 5 0 1 1 0 10A5 5 0 0 1 9 4z" opacity=".6"/><path d="M9 7v2.5l2 1.2-.8 1.3L8 10.4V7h1z"/></svg>
+            Connect Existing Deriv Account
+          </button>
+          <a href="https://track.deriv.be/_h2ByKyTQSY_gRpnniQKmu2Nd7ZgqdRLk/1/" target="_blank" rel="noopener" class="landing-signup-link">No Deriv account yet? Sign up free here →</a>
+          <button id="landingDemoBtn" class="landing-demo-btn">Try Demo Mode (no account needed)</button>
+        </div>
+        <p class="landing-legal">MoneyMeKa Pro is independent of Deriv. Your credentials stay with Deriv — we only receive a secure trading token. Need help? <a href="https://wa.me/2547913734476" target="_blank" rel="noopener" style="color:var(--green);text-decoration:none">WhatsApp us</a></p>
+      </div>
+    </div>
+
+    <div class="shell">
+
+      <!-- TOP BAR -->
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2L4 7v8l7 5 7-5V7L11 2z" stroke="#19c37d" stroke-width="1.8" fill="none"/><path d="M11 6l-4 3v4l4 3 4-3V9l-4-3z" fill="#19c37d" opacity=".4"/><circle cx="11" cy="12" r="2" fill="#19c37d"/></svg>
+          </div>
+          <div>
+            <h1>MoneyMeKa <span class="brand-pro">Pro</span></h1>
+            <p>moneymekapro.com</p>
+          </div>
+        </div>
+
+        <nav class="main-nav" id="mainNav" role="tablist">
+          <button class="nav-tab active" data-tab="analysis" role="tab" aria-selected="true">Analysis</button>
+          <button class="nav-tab" data-tab="bot" role="tab">Bot Builder</button>
+          <button class="nav-tab" data-tab="strategies" role="tab">Strategies</button>
+          <button class="nav-tab" data-tab="calculator" role="tab">Risk Calc</button>
+          <button class="nav-tab" data-tab="journal" role="tab">Journal</button>
+        </nav>
+
+        <div class="top-actions">
+          <div class="status-badge" id="streamBadge">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="streamStateLabel">Offline</span>
+          </div>
+          <div class="account-pill" id="accountStatus">Demo mode</div>
+          <button class="icon-button" id="themeToggle" type="button" title="Toggle theme" aria-label="Toggle light/dark theme">
+            <svg id="themeIcon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 2a5 5 0 1 1 0 10A5 5 0 0 1 8 3zm0 1.5A3.5 3.5 0 1 0 8 12 3.5 3.5 0 0 0 8 4.5z" opacity=".4"/><circle cx="8" cy="8" r="2.5"/></svg>
+          </button>
+          <button class="icon-button" id="settingsButton" type="button" title="Connection settings" aria-label="Connection settings">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0 1.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/><path fill-rule="evenodd" d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 1.5a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11z" opacity=".4"/></svg>
+          </button>
+          <button class="primary-button" id="connectButton" type="button">Connect Deriv</button>
+        </div>
+      </header>
+
+      <!-- ANALYSIS TAB -->
+      <div class="tab-view active" id="tab-analysis" role="tabpanel">
+        <div class="analysis-layout">
+
+          <!-- LEFT: MARKET + CONTROLS -->
+          <aside class="sidebar">
+            <section class="panel">
+              <div class="panel-heading"><h2>Market</h2><span class="live-dot" id="liveIndicator"></span></div>
+              <label class="field-label" for="marketSelect">Synthetic index</label>
+              <select id="marketSelect" class="field">
+                <option value="R_10">Volatility 10 Index</option>
+                <option value="R_25">Volatility 25 Index</option>
+                <option value="R_50">Volatility 50 Index</option>
+                <option value="R_75">Volatility 75 Index</option>
+                <option value="R_100">Volatility 100 Index</option>
+                <option value="1HZ10V" selected>Volatility 10 (1s)</option>
+                <option value="1HZ25V">Volatility 25 (1s)</option>
+                <option value="1HZ50V">Volatility 50 (1s)</option>
+                <option value="1HZ75V">Volatility 75 (1s)</option>
+                <option value="1HZ100V">Volatility 100 (1s)</option>
+              </select>
+              <div class="price-display">
+                <span id="lastPriceBig">--</span>
+                <span class="price-change" id="priceChange">+0.00</span>
+              </div>
+              <div class="stat-row">
+                <div class="stat-cell"><span>Last digit</span><strong id="lastDigitDisplay">--</strong></div>
+                <div class="stat-cell"><span>Tick count</span><strong id="tickCountDisplay">0</strong></div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <h2>Tick window</h2>
+                <span id="windowSizeLabel">1000</span>
+              </div>
+              <div class="window-slider-wrap">
+                <input type="range" id="tickWindowRange" min="50" max="5000" step="50" value="1000" class="tick-slider" />
+                <div class="window-labels"><span>50</span><span>5000</span></div>
+              </div>
+              <input type="number" id="tickWindowInput" class="field" min="50" max="5000" value="1000" />
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading"><h2>Strategy signals</h2></div>
+              <div id="signalList" class="signal-list">
+                <div class="signal-empty">Accumulating ticks…</div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading"><h2>Quick trade</h2><span id="modeLabel">paper</span></div>
+              <div class="balance-card">
+                <span>Balance</span>
+                <strong id="balanceValue">10,000.00 USD</strong>
+              </div>
+              <label class="toggle-row">
+                <input id="realExecutionToggle" type="checkbox" />
+                <span>Enable live execution</span>
+              </label>
+            </section>
+          </aside>
+
+          <!-- CENTER: TICK CHART + DIGIT ANALYSIS -->
+          <section class="main-content">
+            <div class="chart-header-bar">
+              <div>
+                <h2 id="chartTitle">Volatility 10 (1s)</h2>
+                <p id="chartSubtitle">Connecting to price stream…</p>
+              </div>
+              <div class="chart-toolbar">
+                <button type="button" class="tool-button active" data-view="ticks">Ticks</button>
+                <button type="button" class="tool-button" data-view="digits">Digits</button>
+              </div>
+            </div>
+
+            <div class="chart-frame">
+              <canvas id="tickCanvas" width="1200" height="400" aria-label="Live tick chart"></canvas>
+              <div class="chart-overlay">
+                <span id="pricePulse">--</span>
+                <small id="tickTime">--</small>
+              </div>
+            </div>
+
+            <!-- DIGIT DISTRIBUTION -->
+            <section class="panel digit-panel">
+              <div class="panel-heading">
+                <h2>Last <span id="windowLabel">1000</span> ticks — digit distribution</h2>
+                <div class="bar-legend">
+                  <span class="legend-dot" style="background:var(--red)"></span><span>Least</span>
+                  <span class="legend-dot" style="background:var(--amber)"></span><span>2nd least</span>
+                  <span class="legend-dot" style="background:var(--green)"></span><span>Most</span>
+                  <span class="legend-dot" style="background:var(--blue)"></span><span>2nd most</span>
+                </div>
+              </div>
+              <div class="digit-circles" id="digitCircles"></div>
+              <div class="digit-bars-grid" id="digitBarsGrid"></div>
+            </section>
+
+            <!-- EVEN/ODD + OVER/UNDER -->
+            <div class="stats-row">
+              <section class="panel stat-panel">
+                <div class="panel-heading"><h2>Even / Odd</h2></div>
+                <div class="eo-stat">
+                  <div class="eo-block">
+                    <span>Even</span>
+                    <strong id="evenCount">--</strong>
+                    <div class="eo-bar-track"><div class="eo-bar-fill even" id="evenBar" style="width:50%"></div></div>
+                    <em id="evenPct">50.0%</em>
+                  </div>
+                  <div class="eo-divider"></div>
+                  <div class="eo-block">
+                    <span>Odd</span>
+                    <strong id="oddCount">--</strong>
+                    <div class="eo-bar-track"><div class="eo-bar-fill odd" id="oddBar" style="width:50%"></div></div>
+                    <em id="oddPct">50.0%</em>
+                  </div>
+                </div>
+              </section>
+
+              <section class="panel stat-panel">
+                <div class="panel-heading"><h2>Over / Under</h2></div>
+                <div class="ou-grid" id="ouGrid">
+                  <div class="ou-cell">
+                    <span>Over 4</span>
+                    <strong id="over4Pct">--</strong>
+                    <div class="ou-bar"><div class="ou-fill" id="over4Bar"></div></div>
+                  </div>
+                  <div class="ou-cell">
+                    <span>Under 5</span>
+                    <strong id="under5Pct">--</strong>
+                    <div class="ou-bar"><div class="ou-fill under" id="under5Bar"></div></div>
+                  </div>
+                  <div class="ou-cell">
+                    <span>Over 1</span>
+                    <strong id="over1Pct">--</strong>
+                    <div class="ou-bar"><div class="ou-fill" id="over1Bar"></div></div>
+                  </div>
+                  <div class="ou-cell">
+                    <span>Under 8</span>
+                    <strong id="under8Pct">--</strong>
+                    <div class="ou-bar"><div class="ou-fill under" id="under8Bar"></div></div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <!-- RIGHT: TRADE TICKET -->
+          <aside class="trade-panel">
+            <section class="panel ticket">
+              <div class="panel-heading">
+                <h2>Trade ticket</h2>
+                <span id="selectedContract">Even</span>
+              </div>
+
+              <div class="contract-grid" id="contractGrid">
+                <button type="button" data-contract="DIGITEVEN" class="ctype-btn active">Even</button>
+                <button type="button" data-contract="DIGITODD" class="ctype-btn">Odd</button>
+                <button type="button" data-contract="DIGITOVER" class="ctype-btn">Over</button>
+                <button type="button" data-contract="DIGITUNDER" class="ctype-btn">Under</button>
+                <button type="button" data-contract="DIGITMATCH" class="ctype-btn">Match</button>
+                <button type="button" data-contract="DIGITDIFF" class="ctype-btn">Differ</button>
+                <button type="button" data-contract="CALL" class="ctype-btn">Rise</button>
+                <button type="button" data-contract="PUT" class="ctype-btn">Fall</button>
+              </div>
+
+              <div class="ticket-proposal">
+                <span>Proposal</span>
+                <strong id="proposalValue">Paper estimate</strong>
+                <small id="proposalMeta">Payout updates after connection</small>
+              </div>
+
+              <div class="form-grid">
+                <label>
+                  <span>Stake</span>
+                  <input id="stakeInput" class="field" type="number" min="0.35" step="0.01" value="1" />
+                </label>
+                <label>
+                  <span>Duration</span>
+                  <input id="durationInput" class="field" type="number" min="1" step="1" value="1" />
+                </label>
+                <label>
+                  <span>Unit</span>
+                  <select id="durationUnitSelect" class="field">
+                    <option value="t" selected>Ticks</option>
+                    <option value="s">Seconds</option>
+                    <option value="m">Minutes</option>
+                  </select>
+                </label>
+                <label id="digitBarrierField">
+                  <span>Digit</span>
+                  <select id="barrierSelect" class="field">
+                    <option>0</option><option>1</option><option>2</option><option>3</option>
+                    <option selected>4</option><option>5</option><option>6</option>
+                    <option>7</option><option>8</option><option>9</option>
+                  </select>
+                </label>
+              </div>
+
+              <button id="buyButton" class="trade-button" type="button">Buy Even</button>
+              <div class="fee-row">
+                <span>Platform fee</span>
+                <strong id="feeDisplay">3.0%</strong>
+              </div>
+              <p class="risk-note">Paper mode active. Enable live execution and connect Deriv to trade real funds.</p>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading"><h2>Open trades</h2><span id="openCount">0</span></div>
+              <div id="openTrades" class="trade-list empty-state">No open trades yet.</div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <h2>Activity</h2>
+                <button id="clearLogButton" class="text-button" type="button">Clear</button>
+              </div>
+              <div id="activityLog" class="activity-log"></div>
+            </section>
+          </aside>
+        </div>
+      </div>
+
+      <!-- BOT BUILDER TAB -->
+      <div class="tab-view" id="tab-bot">
+        <div class="bot-layout">
+
+          <div class="bot-left">
+            <section class="panel">
+              <div class="panel-heading"><h2>1. Trade parameters</h2></div>
+              <div class="form-grid">
+                <label>
+                  <span>Market</span>
+                  <select id="botMarket" class="field">
+                    <option value="1HZ10V" selected>Volatility 10 (1s)</option>
+                    <option value="1HZ25V">Volatility 25 (1s)</option>
+                    <option value="1HZ50V">Volatility 50 (1s)</option>
+                    <option value="1HZ75V">Volatility 75 (1s)</option>
+                    <option value="1HZ100V">Volatility 100 (1s)</option>
+                    <option value="R_10">Volatility 10</option>
+                    <option value="R_25">Volatility 25</option>
+                    <option value="R_50">Volatility 50</option>
+                    <option value="R_75">Volatility 75</option>
+                    <option value="R_100">Volatility 100</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Trade type</span>
+                  <select id="botTradeType" class="field">
+                    <option value="digits_ou">Digits – Over/Under</option>
+                    <option value="digits_eo">Digits – Even/Odd</option>
+                    <option value="digits_match">Digits – Match/Differ</option>
+                    <option value="updown">Up/Down – Rise/Fall</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Initial stake</span>
+                  <input id="botStake" class="field" type="number" min="0.35" step="0.01" value="1" />
+                </label>
+                <label>
+                  <span>Recovery stake (stake2)</span>
+                  <input id="botStake2" class="field" type="number" min="0.35" step="0.01" value="1" />
+                </label>
+                <label>
+                  <span>Loss limit</span>
+                  <input id="botLossLimit" class="field" type="number" min="1" value="50" />
+                </label>
+                <label>
+                  <span>Target profit</span>
+                  <input id="botTargetProfit" class="field" type="number" min="1" value="25" />
+                </label>
+                <label>
+                  <span>Duration</span>
+                  <input id="botDuration" class="field" type="number" min="1" value="1" />
+                </label>
+                <label>
+                  <span>Duration unit</span>
+                  <select id="botDurationUnit" class="field">
+                    <option value="t" selected>Ticks</option>
+                    <option value="s">Seconds</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading"><h2>2. Strategy filter</h2></div>
+              <p class="hint-text">Bot only trades when strategy conditions are met. Disable to trade every tick.</p>
+              <label class="toggle-row">
+                <input id="botUseStrategy" type="checkbox" checked />
+                <span>Require strategy signal before entry</span>
+              </label>
+              <div id="botStrategyPicker" class="strat-picker">
+                <label class="radio-row"><input type="radio" name="botStrat" value="over123" checked /><span>Over 1/2/3</span></label>
+                <label class="radio-row"><input type="radio" name="botStrat" value="under876" /><span>Under 8/7/6</span></label>
+                <label class="radio-row"><input type="radio" name="botStrat" value="odd" /><span>Odd</span></label>
+                <label class="radio-row"><input type="radio" name="botStrat" value="even" /><span>Even</span></label>
+                <label class="radio-row"><input type="radio" name="botStrat" value="hitrun" /><span>Hit &amp; Run</span></label>
+                <label class="radio-row"><input type="radio" name="botStrat" value="manual" /><span>Manual (any tick)</span></label>
+                <label class="radio-row ai-opt-row"><input type="radio" name="botStrat" value="aiAuto" /><span>AI Auto-Select <span class="ai-badge">AI</span></span></label>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading"><h2>3. Recovery logic</h2></div>
+              <div class="form-grid">
+                <label>
+                  <span>On loss: multiply stake by</span>
+                  <input id="botMartingale" class="field" type="number" min="1" max="4" step="0.1" value="1" />
+                </label>
+                <label>
+                  <span>Max consecutive losses</span>
+                  <input id="botMaxLoss" class="field" type="number" min="1" value="4" />
+                </label>
+              </div>
+              <label class="toggle-row" style="margin-top:10px">
+                <input id="botResetOnWin" type="checkbox" checked />
+                <span>Reset stake to initial after win</span>
+              </label>
+            </section>
+          </div>
+
+          <div class="bot-center">
+            <div class="bot-status-bar">
+              <div class="bstat"><span>Status</span><strong id="botStatusLabel">Idle</strong></div>
+              <div class="bstat"><span>Runs</span><strong id="botRunCount">0</strong></div>
+              <div class="bstat"><span>Wins</span><strong id="botWinCount" class="profit">0</strong></div>
+              <div class="bstat"><span>Losses</span><strong id="botLossCount" class="loss">0</strong></div>
+              <div class="bstat"><span>P/L</span><strong id="botPL">0.00</strong></div>
+              <div class="bstat"><span>Balance</span><strong id="botBalance">--</strong></div>
+            </div>
+
+            <div class="bot-controls">
+              <button id="botRunBtn" class="bot-run-btn" type="button">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><path d="M5 3.5l10 5.5-10 5.5V3.5z"/></svg>
+                Run Bot
+              </button>
+              <button id="botStopBtn" class="bot-stop-btn" type="button" disabled>
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><rect x="4" y="4" width="10" height="10" rx="1"/></svg>
+                Stop
+              </button>
+              <button id="botResetBtn" class="secondary-button" type="button">Reset stats</button>
+            </div>
+
+            <div class="panel">
+              <div class="panel-heading"><h2>Bot log</h2><button id="clearBotLog" class="text-button" type="button">Clear</button></div>
+              <div id="botLog" class="bot-log"></div>
+            </div>
+          </div>
+
+          <div class="bot-right">
+            <section class="panel">
+              <div class="panel-heading"><h2>Live digit feed</h2></div>
+              <div id="botDigitFeed" class="digit-feed"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-heading"><h2>Digit distribution</h2><span id="botWindow">1000 ticks</span></div>
+              <div id="botDigitBars" class="digit-bars-grid mini"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-heading"><h2>Signal status</h2></div>
+              <div id="botSignalStatus" class="signal-status-grid"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <h2>AI Advisor</h2>
+                <span id="aiMoodBadge" class="mood-badge neutral">Neutral</span>
+              </div>
+              <div class="ai-rec-row">
+                <span class="ai-rec-label">Best signal</span>
+                <strong id="aiRecStrategy">Analyzing…</strong>
+              </div>
+              <div class="ai-conf-wrap">
+                <div class="ai-conf-track"><div id="aiConfidenceFill" class="ai-conf-fill" style="width:0%"></div></div>
+                <span id="aiConfidenceText" class="ai-conf-pct">0%</span>
+              </div>
+              <div id="aiScoresGrid" class="ai-scores-grid"></div>
+              <button id="aiApplyBtn" class="secondary-button" style="width:100%;margin-top:10px;font-size:12px">Apply AI Pick to Bot</button>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <!-- STRATEGIES TAB -->
+      <div class="tab-view" id="tab-strategies">
+        <div class="strategies-grid">
+
+          <div class="strat-card" data-strat="over123">
+            <div class="strat-card-head over">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 4l8 5v10l-8 5-8-5V9l8-5z" stroke="#4f8cff" stroke-width="1.5" fill="rgba(79,140,255,.15)"/><path d="M14 10v8M10 14h8" stroke="#4f8cff" stroke-width="2" stroke-linecap="round"/></svg>
+              <h3>Over 1 / 2 / 3</h3>
+            </div>
+            <div class="strat-body">
+              <div class="strat-condition">
+                <strong>Conditions</strong>
+                <ul>
+                  <li>Digits 0, 1, 2 &amp; 3 all below 10% (with red or yellow bar)</li>
+                  <li>At least two of digits 4–9 at 11%+</li>
+                  <li>Green &amp; blue bars within the same range</li>
+                </ul>
+              </div>
+              <div class="strat-entry">
+                <strong>Entry</strong>
+                <p>Wait for tick pointer on least among 1, 2 &amp; 3. If next tick lands on digit 4–9, enter immediately.</p>
+              </div>
+              <div class="strat-live" id="live-over123">
+                <span class="cond-badge neutral">Checking…</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="strat-card" data-strat="under876">
+            <div class="strat-card-head under">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 4l8 5v10l-8 5-8-5V9l8-5z" stroke="#ff5c6c" stroke-width="1.5" fill="rgba(255,92,108,.15)"/><path d="M10 14h8M14 18v-4" stroke="#ff5c6c" stroke-width="2" stroke-linecap="round"/></svg>
+              <h3>Under 8 / 7 / 6</h3>
+            </div>
+            <div class="strat-body">
+              <div class="strat-condition">
+                <strong>Conditions</strong>
+                <ul>
+                  <li>Digits 9, 8, 7 &amp; 6 all below 10% (with red or yellow bar)</li>
+                  <li>At least two of digits 0–5 at 11%+</li>
+                  <li>Green &amp; blue bars within the same range</li>
+                </ul>
+              </div>
+              <div class="strat-entry">
+                <strong>Entry</strong>
+                <p>Wait for tick pointer on least among 8, 7 &amp; 6. If next tick lands on digit 0–4, enter immediately.</p>
+              </div>
+              <div class="strat-live" id="live-under876">
+                <span class="cond-badge neutral">Checking…</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="strat-card" data-strat="odd">
+            <div class="strat-card-head odd-head">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="9" stroke="#f5b84b" stroke-width="1.5" fill="rgba(245,184,75,.15)"/><text x="14" y="18.5" text-anchor="middle" fill="#f5b84b" font-size="10" font-weight="700">ODD</text></svg>
+              <h3>Odd Strategy</h3>
+            </div>
+            <div class="strat-body">
+              <div class="strat-condition">
+                <strong>Conditions</strong>
+                <ul>
+                  <li>Green &amp; blue bars both on odd digits (1,3,5,7,9) at 11%+</li>
+                  <li>Red bar on even digit, ≤8.6%</li>
+                  <li>Yellow bar on even digit, ≤9.5%</li>
+                </ul>
+              </div>
+              <div class="strat-entry">
+                <strong>Entry</strong>
+                <p>Wait for tick pointer on least (red/yellow). Watch for 2 consecutive odd digits in next 5 ticks, then enter.</p>
+              </div>
+              <div class="strat-live" id="live-odd">
+                <span class="cond-badge neutral">Checking…</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="strat-card" data-strat="even">
+            <div class="strat-card-head even-head">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="9" stroke="#19c37d" stroke-width="1.5" fill="rgba(25,195,125,.15)"/><text x="14" y="18.5" text-anchor="middle" fill="#19c37d" font-size="9" font-weight="700">EVEN</text></svg>
+              <h3>Even Strategy</h3>
+            </div>
+            <div class="strat-body">
+              <div class="strat-condition">
+                <strong>Conditions</strong>
+                <ul>
+                  <li>Green &amp; blue bars both on even digits (0,2,4,6,8) at 11%+</li>
+                  <li>Red bar ≤8.6%, Yellow bar ≤9.5%</li>
+                  <li>Red &amp; yellow can be on odd or mixed digits</li>
+                </ul>
+              </div>
+              <div class="strat-entry">
+                <strong>Entry</strong>
+                <p>Wait for tick pointer on odd digit among least pair. If even digit appears in next 3 ticks, enter immediately.</p>
+              </div>
+              <div class="strat-live" id="live-even">
+                <span class="cond-badge neutral">Checking…</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="strat-card wide" data-strat="hitrun">
+            <div class="strat-card-head hitrun-head">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M6 22l6-12 4 6 3-4 3 10" stroke="#f5b84b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="22" cy="6" r="3" fill="#f5b84b" opacity=".6"/></svg>
+              <h3>Hit &amp; Run</h3>
+            </div>
+            <div class="strat-body hitrun-body">
+              <div>
+                <div class="strat-condition">
+                  <strong>Over 1 — Entry digits: 5 or 9</strong>
+                  <ul>
+                    <li>Market in uptrend (growing green candles)</li>
+                    <li>Digits 0 &amp; 1 below 10%</li>
+                    <li>3-tick sequence validation before entry</li>
+                  </ul>
+                </div>
+                <div class="strat-live" id="live-hitrun-over">
+                  <span class="cond-badge neutral">Checking…</span>
+                </div>
+              </div>
+              <div>
+                <div class="strat-condition">
+                  <strong>Under 8 — Entry digits: 0, 4, or 9</strong>
+                  <ul>
+                    <li>Market in downtrend (growing red candles)</li>
+                    <li>Digits 9 &amp; 8 below 10%</li>
+                    <li>3-tick sequence validation before entry</li>
+                  </ul>
+                </div>
+                <div class="strat-live" id="live-hitrun-under">
+                  <span class="cond-badge neutral">Checking…</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RISK CALCULATOR TAB -->
+      <div class="tab-view" id="tab-calculator">
+        <div class="calc-layout">
+
+          <section class="panel calc-card">
+            <div class="panel-heading"><h2>Martingale Calculator</h2></div>
+            <p class="hint-text">Enter your account capital to calculate safe staking parameters.</p>
+            <label class="settings-field">
+              <span>Initial capital</span>
+              <input id="calcCapital" class="field" type="number" min="10" step="10" placeholder="e.g. 500" />
+            </label>
+            <div class="calc-results" id="calcResults">
+              <div class="calc-row"><span>Recommended stake (2% of capital)</span><strong id="calcStake">--</strong></div>
+              <div class="calc-row"><span>Take profit (5× stake)</span><strong id="calcTakeProfit">--</strong></div>
+              <div class="calc-row"><span>Stop loss (4 losses sum)</span><strong id="calcStopLoss">--</strong></div>
+              <div class="calc-row"><span>Max recovery stake (martingale ×4)</span><strong id="calcMaxStake">--</strong></div>
+              <div class="calc-row"><span>Drawdown risk (4 losses)</span><strong id="calcDrawdown">--</strong></div>
+            </div>
+          </section>
+
+          <section class="panel calc-card">
+            <div class="panel-heading"><h2>Martingale sequence</h2></div>
+            <p class="hint-text">Full stake progression if losses run in sequence (starting from your stake).</p>
+            <div id="martingaleTable" class="martingale-table"></div>
+          </section>
+
+          <section class="panel calc-card">
+            <div class="panel-heading"><h2>Risk guidance</h2></div>
+            <div class="risk-tips">
+              <div class="risk-tip green-tip">
+                <strong>Safe zone</strong>
+                <p>Stake ≤ 2% of capital. Stop loss at 4 consecutive losses. Take profit at 5× stake per session.</p>
+              </div>
+              <div class="risk-tip amber-tip">
+                <strong>Caution</strong>
+                <p>Stop the bot after 3–7 profitable runs. Re-evaluate market conditions before the next session.</p>
+              </div>
+              <div class="risk-tip red-tip">
+                <strong>Warning</strong>
+                <p>Never use martingale beyond 4 steps. Each loss doubles exposure. Capital can deplete in minutes during a streak.</p>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+      <!-- JOURNAL TAB -->
+      <div class="tab-view" id="tab-journal">
+        <div class="journal-layout">
+          <div class="journal-header">
+            <div class="journal-stats">
+              <div class="jstat"><span>Total trades</span><strong id="jTotal">0</strong></div>
+              <div class="jstat"><span>Wins</span><strong id="jWins" class="profit">0</strong></div>
+              <div class="jstat"><span>Losses</span><strong id="jLosses" class="loss">0</strong></div>
+              <div class="jstat"><span>Win rate</span><strong id="jWinRate">--</strong></div>
+              <div class="jstat"><span>Total P/L</span><strong id="jPL">0.00</strong></div>
+              <div class="jstat"><span>Avg stake</span><strong id="jAvgStake">--</strong></div>
+            </div>
+            <button id="exportJournal" class="secondary-button" type="button">Export CSV</button>
+          </div>
+          <section class="panel">
+            <div class="panel-heading"><h2>Trade history</h2><button id="clearJournal" class="text-button" type="button">Clear all</button></div>
+            <div id="journalTable" class="journal-table">
+              <div class="journal-empty">No trades recorded yet.</div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <footer class="site-footer">
+        <div class="footer-inner">
+          <div class="footer-brand">
+            <div class="brand-mark" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 22 22" fill="none"><path d="M11 2L4 7v8l7 5 7-5V7L11 2z" stroke="#19c37d" stroke-width="1.8" fill="none"/><path d="M11 6l-4 3v4l4 3 4-3V9l-4-3z" fill="#19c37d" opacity=".4"/><circle cx="11" cy="12" r="2" fill="#19c37d"/></svg>
+            </div>
+            <span>MoneyMeKa Pro &copy; 2025 &mdash; <a href="https://moneymekapro.com" target="_blank">moneymekapro.com</a></span>
+          </div>
+          <div class="footer-links">
+            <a href="https://track.deriv.be/_h2ByKyTQSY_gRpnniQKmu2Nd7ZgqdRLk/1/" target="_blank" rel="noopener" class="footer-cta">Open Deriv Account</a>
+            <a href="mailto:moneymekapro@gmail.com">moneymekapro@gmail.com</a>
+            <a href="https://wa.me/2547913734476" target="_blank" rel="noopener">WhatsApp Support</a>
+          </div>
+          <div class="footer-legal">
+            MoneyMeKa Pro is an independent third-party platform and is not affiliated with or endorsed by Deriv. Trading synthetic indices involves risk. Trade responsibly.
+          </div>
+        </div>
+      </footer>
+    </div><!-- .shell -->
+
+    <!-- WHATSAPP FLOAT -->
+    <a href="https://wa.me/2547913734476" target="_blank" rel="noopener" class="wa-float" title="Chat with support on WhatsApp" aria-label="WhatsApp support">
+      <svg width="26" height="26" viewBox="0 0 32 32" fill="white"><path d="M16 3C9 3 3 9 3 16c0 2.3.6 4.5 1.8 6.4L3 29l6.8-1.8A13 13 0 0 0 16 29c7 0 13-6 13-13S23 3 16 3zm0 2c6 0 11 5 11 11s-5 11-11 11c-2 0-3.9-.5-5.5-1.5l-.4-.2-3.9 1 1-3.8-.3-.4A11 11 0 0 1 5 16C5 10 10 5 16 5zm-3 5.5c-.3 0-.7.1-1 .5-.3.4-1.2 1.2-1.2 2.9s1.3 3.4 1.4 3.6c.2.2 2.5 3.9 6.2 5.3 3 1.2 3.7.9 4.4.9.6 0 2-.8 2.3-1.6.3-.8.3-1.4.2-1.6-.1-.2-.3-.3-.6-.4l-2-.9c-.3-.1-.5-.2-.8.2l-1 1.2c-.2.2-.4.2-.7.1-1-.4-2.8-1-4-2.6-.1-.2-.1-.4.1-.5l.7-.8c.2-.2.2-.4.3-.6l-1-2.3c-.2-.5-.5-.5-.7-.5z"/></svg>
+    </a>
+
+    <!-- SETTINGS DIALOG -->
+    <dialog id="settingsDialog" class="settings-dialog">
+      <form method="dialog" class="settings-card">
+        <div class="settings-head">
+          <div>
+            <h2>Deriv connection</h2>
+            <p>Connect your Deriv account to enable live trading. Use OAuth for a secure token exchange.</p>
+          </div>
+          <button class="icon-button close-btn" value="cancel" type="submit" aria-label="Close">×</button>
+        </div>
+        <label class="settings-field">
+          <span>Deriv app ID</span>
+          <input id="appIdInput" class="field" type="text" value="33iZljc09mR2ZlLqP8QET" autocomplete="off" />
+          <small class="field-hint">Register your app at api.deriv.com to get your own app ID for revenue tracking.</small>
+        </label>
+        <label class="settings-field">
+          <span>API token (optional)</span>
+          <input id="tokenInput" class="field" type="password" placeholder="Paste a scoped Deriv token" autocomplete="off" />
+        </label>
+        <label class="settings-field">
+          <span>Platform markup % <span class="fee-badge">Your revenue</span></span>
+          <input id="markupInput" class="field" type="number" min="0" max="3" step="0.1" value="3" />
+          <small class="field-hint">Deriv deducts this from user payouts and pays it to you on every trade. Max 3%. Must also be set in your app settings at api.deriv.com.</small>
+        </label>
+        <div class="settings-actions">
+          <button id="oauthButton" class="secondary-button" type="button">Open Deriv OAuth</button>
+          <button id="saveSettingsButton" class="primary-button" value="default" type="submit">Save &amp; connect</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
