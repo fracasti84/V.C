@@ -17,7 +17,7 @@ const CONTRACT_LABELS = {
 
 // ── STATE ───────────────────────────────────────────────────
 const st = {
-  appId: localStorage.getItem("mm.appId") || "33j3KnddANLxl1PUwgCYq",
+  appId: localStorage.getItem("mm.appId") || "1089",
   token: localStorage.getItem("mm.token") || "",
   markup: Number(localStorage.getItem("mm.markup") ?? 3),
   ws: null, wsReady: false, isAuthorized: false,
@@ -1611,20 +1611,12 @@ async function generatePKCE() {
   return { codeVerifier, codeChallenge, state };
 }
 
-async function redirectToOAuth() {
-  const { codeVerifier, codeChallenge, state } = await generatePKCE();
-  sessionStorage.setItem("pkce_code_verifier", codeVerifier);
-  sessionStorage.setItem("oauth_state", state);
-  const params = new URLSearchParams({
-    response_type: "code",
-    client_id: st.appId,
-    redirect_uri: "https://moneymekapro.com/callback",
-    scope: "trade account_manage",
-    state,
-    code_challenge: codeChallenge,
-    code_challenge_method: "S256"
-  });
-  window.location.href = `https://auth.deriv.com/oauth2/auth?${params}`;
+function redirectToOAuth() {
+  // Read current input value before redirecting so typing a new ID takes effect
+  const inputId = el.appIdInput?.value.trim();
+  if (inputId) { st.appId = inputId; localStorage.setItem("mm.appId", inputId); }
+  // Standard Deriv third-party OAuth — returns token1/acct1/cur1 in redirect URL
+  window.location.href = `https://oauth.deriv.com/oauth2/authorize?app_id=${encodeURIComponent(st.appId)}&l=EN&brand=deriv`;
 }
 
 async function extractOauthToken() {
@@ -1745,7 +1737,7 @@ function bindEvents() {
     updateModeUi();
     showLanding();
   });
-  el.oauthBtn.addEventListener("click", () => { redirectToOAuth(); log("Redirecting to Deriv OAuth…"); });
+  el.oauthBtn.addEventListener("click", () => { log("Redirecting to Deriv OAuth…"); redirectToOAuth(); });
   el.saveSettingsBtn.addEventListener("click",()=>{
     st.appId = el.appIdInput.value.trim()||"1089";
     st.token = el.tokenInput.value.trim();
