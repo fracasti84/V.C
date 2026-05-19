@@ -979,7 +979,7 @@ function runBotEngine(price) {
   }
 
   // AI Auto: auto-switch to best market every 20 ticks when idle
-  if (b.strategy === "aiAuto" && !b.pendingTrade && !b.entryWatch) {
+  if (b.strategy === "aiAuto" && !b.pendingTrade) {
     b._aiSwitchCooldown = (b._aiSwitchCooldown || 0) - 1;
     if (b._aiSwitchCooldown <= 0 && st.aiRec?.bestMarket) {
       const bestSym = st.aiRec.bestMarket.sym;
@@ -995,25 +995,10 @@ function runBotEngine(price) {
     }
   }
 
-  // check entry
-  if (b.entryWatch) {
-    const w2 = b.entryWatch;
-    w2.ticksElapsed++;
-    const entryNow = evaluateEntryTrigger(w2, dig, stats);
-    if (entryNow) {
-      executeBotTrade(dig, stats);
-      b.entryWatch = null;
-    } else if (w2.ticksElapsed >= w2.maxTicks) {
-      b.entryWatch = null; // expired
-    }
-    return;
-  }
-
-  // check if strategy conditions met
+  // check if strategy conditions met — trade immediately
   const stratOk = checkBotStrategy(b.strategy, stats, dig);
   if (stratOk) {
-    b.entryWatch = buildEntryWatch(b.strategy, dig, stats);
-    if (!b.entryWatch) executeBotTrade(dig, stats); // immediate
+    executeBotTrade(dig, stats);
   }
 }
 
