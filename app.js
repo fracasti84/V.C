@@ -368,9 +368,12 @@ function onTick(price, sym, ts) {
   if (sym === st.symbol) {
     settlePaperTrades(price);
     runStrategyEngine(price);
-    runBotEngine(price);
     renderAll();
     if (st.wsReady) refreshProposal();
+  }
+  // Run bot engine on bot's market ticks (may differ from chart market)
+  if (sym === (st.bot.market || st.symbol)) {
+    runBotEngine(price);
   }
   updateBotDigitFeed(price);
   scheduleTickerUpdate();
@@ -1017,12 +1020,12 @@ function runBotEngine(price) {
 function checkBotStrategy(strat, stats, dig) {
   if (!st.bot.useStrategy || strat === "manual") return true;
   switch (strat) {
-    case "over123": return checkOver123(stats) === "ready";
-    case "under876": return checkUnder876(stats) === "ready";
-    case "odd":     return checkOdd(stats) === "ready";
-    case "even":    return checkEven(stats) === "ready";
-    case "hitrun":  { const hr=checkHitRun(stats); return hr.over==="ready"||hr.under==="ready"; }
-    case "aiAuto":  return st.aiRec ? st.aiRec.confidence >= 50 : false;
+    case "over123": { const s=checkOver123(stats); return s==="ready"||s==="partial"; }
+    case "under876":{ const s=checkUnder876(stats); return s==="ready"||s==="partial"; }
+    case "odd":     { const s=checkOdd(stats);     return s==="ready"||s==="partial"; }
+    case "even":    { const s=checkEven(stats);     return s==="ready"||s==="partial"; }
+    case "hitrun":  { const hr=checkHitRun(stats); return hr.over!=="fail"||hr.under!=="fail"; }
+    case "aiAuto":  return st.aiRec ? st.aiRec.confidence >= 45 : false;
     default: return true;
   }
 }
