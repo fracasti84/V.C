@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>MoneyMaker Pro | Advanced Deriv Trading Terminal</title>
     <meta name="description" content="MoneyMaker Pro — AI-powered Deriv synthetics terminal with live tick analysis, smart strategy signals, and automated bot trading." />
-    <link rel="stylesheet" href="./styles.css?v=20260519" />
+    <link rel="stylesheet" href="./styles.css?v=20260519b" />
   </head>
   <body>
 
@@ -824,9 +824,20 @@
       </form>
     </dialog>
 
-    <script src="./app.js?v=20260519e"></script>
+    <script src="./app.js?v=20260519f"></script>
 
     <!-- WIN/LOSS CELEBRATION TOAST -->
+    <div id="botResultBackdrop" class="bot-result-backdrop">
+      <div class="bot-result-card">
+        <span id="brEmoji" class="br-emoji">🎉</span>
+        <div id="brTitle" class="br-title">Target Reached!</div>
+        <div id="brSub" class="br-sub">Session Complete</div>
+        <div id="brAmount" class="br-amount">+$0.00</div>
+        <div id="brDetail" class="br-detail">MoneyMeKa Pro Bot</div>
+        <button class="br-close" onclick="document.getElementById('botResultBackdrop').classList.remove('show','loss')">Close</button>
+      </div>
+    </div>
+
     <div id="celebrationToast" class="celebration-toast">
       <div id="ctIcon" class="ct-icon">🎉</div>
       <div id="ctTitle" class="ct-title">You Won!</div>

@@ -974,11 +974,11 @@ function runBotEngine(price) {
 
     if (b.pl <= -b.lossLimit) {
       botLog(`Loss limit hit ($${b.lossLimit}). Bot stopped.`, "warn");
-      stopBot(); return;
+      stopBot(); showBotResult(false); return;
     }
     if (b.pl >= b.targetProfit) {
       botLog(`Target profit reached ($${b.targetProfit}). Bot stopped.`, "win");
-      stopBot(); return;
+      stopBot(); showBotResult(true); return;
     }
 
     if (b.strategy === "aiAuto" && !b.pendingTrade) {
@@ -1917,6 +1917,21 @@ function updateTickerRibbon() {
   ).join("");
 
   inner.innerHTML = html;
+}
+
+// ── BOT SESSION END POPUP ────────────────────────────────────
+function showBotResult(won) {
+  const b = st.bot;
+  const backdrop = $("botResultBackdrop");
+  if (!backdrop) return;
+  const pl = b.pl;
+  $("brEmoji").textContent   = won ? "🎉" : "😬";
+  $("brTitle").textContent   = won ? "Target Reached!" : "Oops! Loss Limit Hit";
+  $("brSub").textContent     = `${b.runs} trades · ${b.wins}W / ${b.losses}L`;
+  $("brAmount").textContent  = (pl >= 0 ? "+" : "") + "$" + Math.abs(pl).toFixed(2);
+  $("brDetail").textContent  = won ? "Nice session — well done!" : "Better luck next time.";
+  backdrop.classList.toggle("loss", !won);
+  backdrop.classList.add("show");
 }
 
 // ── WIN / LOSS CELEBRATION ───────────────────────────────────
