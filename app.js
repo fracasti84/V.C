@@ -371,8 +371,8 @@ function onTick(price, sym, ts) {
     renderAll();
     if (st.wsReady) refreshProposal();
   }
-  // Run bot engine on bot's market ticks (may differ from chart market)
-  if (sym === (st.bot.market || st.symbol)) {
+  // Run bot engine on every tick when bot is active
+  if (st.bot.running) {
     runBotEngine(price);
   }
   updateBotDigitFeed(price);
