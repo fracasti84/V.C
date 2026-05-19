@@ -797,7 +797,7 @@ function computeMarketMood(w) {
 function getBestMarketForStrat(strat) {
   let bestSym = null, bestScore = -1;
   for (const [sym, arr] of Object.entries(st.ticksAll)) {
-    if (!arr || arr.length < 100) continue;
+    if (!arr || arr.length < 50) continue;
     const w2 = arr.slice(-Math.min(arr.length, st.tickWindow));
     const sc = computeStrategyScore(strat, computeDigitStats(w2));
     if (sc > bestScore) { bestScore = sc; bestSym = sym; }
@@ -820,7 +820,7 @@ async function runMarketScan() {
   const strats = ["over123", "under876", "odd", "even", "hitrun"];
   const candidates = Object.keys(st.ticksAll).filter(sym => {
     const arr = st.ticksAll[sym];
-    return arr && arr.length >= 100;
+    return arr && arr.length >= 50;
   });
 
   if (!candidates.length) {
@@ -843,8 +843,8 @@ async function runMarketScan() {
     await new Promise(r => setTimeout(r, 140));
 
     const arr = st.ticksAll[sym];
-    if (!arr || arr.length < 100) continue;
-    const stats = computeDigitStats(arr.slice(-100));
+    if (!arr || arr.length < 50) continue;
+    const stats = computeDigitStats(arr.slice(-50));
 
     let bestScore = 0;
     strats.forEach(s => {
@@ -1855,7 +1855,7 @@ function bindEvents() {
 }
 
 // ── TICKER RIBBON ────────────────────────────────────────────
-const TICKER_EXTRA_SYMS = ["R_10", "1HZ25V", "1HZ50V", "R_100", "1HZ100V"];
+const TICKER_EXTRA_SYMS = ["R_10","R_25","R_50","R_75","R_100","1HZ25V","1HZ50V","1HZ75V","1HZ100V"];
 
 function subscribeTickerSyms() {
   if (!st.wsReady) return;
