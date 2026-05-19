@@ -403,7 +403,7 @@ function renderAll() {
   renderDigitAnalysis(w, dig);
   renderEvenOdd(w);
   renderOverUnder(w);
-  renderSignals();
+
   renderOpenTrades();
   updateModeUi();
 }
