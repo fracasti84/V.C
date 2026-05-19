@@ -2,6 +2,16 @@
   publish = "."
   functions = "netlify/functions"
 
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
