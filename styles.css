@@ -1129,3 +1129,21 @@ body.light .bot-center .panel { background: rgba(255,255,255,.96); }
   background: rgba(245,184,75,.2); color: var(--amber);
   vertical-align: middle; margin-left: 6px; letter-spacing: .3px;
 }
+
+/* ── AI SCAN PANEL ───────────────────────────────────────── */
+.ai-scan-panel { margin: 10px 0; border: 1px solid var(--line-soft); border-radius: var(--radius); overflow: hidden; }
+.asp-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--surface-3); font-size: 11px; }
+.asp-title { font-weight: 700; color: var(--text); letter-spacing: .03em; text-transform: uppercase; font-size: 10px; }
+.asp-status { color: var(--muted); font-size: 10px; }
+.asp-list { max-height: 200px; overflow-y: auto; }
+.asp-item { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; padding: 5px 10px; border-bottom: 1px solid var(--line-soft); font-size: 11px; transition: background .2s; }
+.asp-item:last-child { border-bottom: none; }
+.asp-item.winner { background: var(--green-dim); }
+.asp-sym { color: var(--text); }
+.asp-item.scanning .asp-sym::after { content: " ·"; animation: scan-dots 1s steps(3,end) infinite; }
+@keyframes scan-dots { 0%{content:" ·"} 33%{content:" ··"} 66%{content:" ···"} 100%{content:" ·"} }
+.asp-score { font-weight: 700; min-width: 34px; text-align: right; }
+.asp-score.high { color: var(--green); }
+.asp-score.med  { color: var(--amber); }
+.asp-score.low  { color: var(--red); }
+.asp-winner-badge { font-size: 8px; font-weight: 800; background: var(--green); color: #000; padding: 1px 5px; border-radius: 3px; letter-spacing: .05em; white-space: nowrap; }

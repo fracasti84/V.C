@@ -806,6 +806,88 @@ function getBestMarketForStrat(strat) {
   return { sym: bestSym, name: MARKETS[bestSym] || bestSym, score: bestScore };
 }
 
+// ── MARKET SCAN ANIMATION ────────────────────────────────────
+let scanRunning = false;
+async function runMarketScan() {
+  if (scanRunning) return;
+  scanRunning = true;
+
+  const scanList = $("aiScanList");
+  const scanStatus = $("aiScanStatus");
+  if (scanStatus) scanStatus.textContent = "Scanning…";
+  if (scanList) scanList.innerHTML = "";
+
+  const strats = ["over123", "under876", "odd", "even", "hitrun"];
+  const candidates = Object.keys(st.ticksAll).filter(sym => {
+    const arr = st.ticksAll[sym];
+    return arr && arr.length >= 100;
+  });
+
+  if (!candidates.length) {
+    if (scanStatus) scanStatus.textContent = "Waiting for data…";
+    scanRunning = false;
+    return;
+  }
+
+  const results = [];
+
+  for (const sym of candidates) {
+    const name = MARKETS[sym] || sym;
+    if (scanList) {
+      const row = document.createElement("div");
+      row.className = "asp-item scanning";
+      row.dataset.sym = sym;
+      row.innerHTML = `<span class="asp-sym">${name}</span><span class="asp-score">—</span><span></span>`;
+      scanList.appendChild(row);
+    }
+    await new Promise(r => setTimeout(r, 140));
+
+    const arr = st.ticksAll[sym];
+    if (!arr || arr.length < 100) continue;
+    const stats = computeDigitStats(arr.slice(-100));
+
+    let bestScore = 0;
+    strats.forEach(s => {
+      const sc = computeStrategyScore(s, stats);
+      if (sc > bestScore) bestScore = sc;
+    });
+    bestScore = Math.round(bestScore);
+    results.push({ sym, name, score: bestScore });
+
+    if (scanList) {
+      const row = scanList.querySelector(`[data-sym="${sym}"]`);
+      if (row) {
+        const cls = bestScore >= 70 ? "high" : bestScore >= 45 ? "med" : "low";
+        row.className = "asp-item";
+        row.innerHTML = `<span class="asp-sym">${name}</span><span class="asp-score ${cls}">${bestScore}%</span><span></span>`;
+      }
+    }
+  }
+
+  results.sort((a, b) => b.score - a.score);
+  const winner = results[0];
+
+  if (winner && scanList) {
+    const row = scanList.querySelector(`[data-sym="${winner.sym}"]`);
+    if (row) {
+      row.className = "asp-item winner";
+      row.innerHTML = `<span class="asp-sym">${winner.name}</span><span class="asp-score high">${winner.score}%</span><span class="asp-winner-badge">BEST</span>`;
+    }
+  }
+
+  if (winner) {
+    if (!st.aiRec) st.aiRec = {};
+    st.aiRec.bestMarket = { sym: winner.sym, name: winner.name, score: winner.score };
+    const aiMarketRow = $("aiMarketRow");
+    const aiRecMarket = $("aiRecMarket");
+    if (aiMarketRow) aiMarketRow.style.display = "";
+    if (aiRecMarket) aiRecMarket.textContent = winner.name;
+  }
+
+  if (scanStatus) scanStatus.textContent = winner ? `Best: ${winner.name} (${winner.score}%)` : "No clear winner";
+  scanRunning = false;
+}
+
 function getAIRecommendation(stats, w) {
   const strats = ["over123","under876","odd","even","hitrun"];
   const scores = {};
@@ -1475,6 +1557,14 @@ function startBot() {
   b.stake = Number(el.botStake.value||1);
   b.stake2 = Number(el.botStake2.value||1);
   b.currentStake = b.stake;
+  // Reset session P/L so previous runs don't trigger stop conditions immediately
+  b.pl = 0; b.runs = 0; b.wins = 0; b.losses = 0; b.consecutiveLosses = 0;
+  if (el.botRunCount) el.botRunCount.textContent = "0";
+  if (el.botWinCount) el.botWinCount.textContent = "0";
+  if (el.botLossCount) el.botLossCount.textContent = "0";
+  if (el.botPL) { el.botPL.textContent = "0.00"; el.botPL.className = ""; }
+  const feed = $("botTradeFeed");
+  if (feed) feed.innerHTML = `<div class="btf-empty">No trades yet — start the bot to see live results</div>`;
   b.lossLimit = Number(el.botLossLimit.value||50);
   b.targetProfit = Number(el.botTargetProfit.value||25);
   b.duration = Number(el.botDuration.value||1);
@@ -1633,18 +1723,25 @@ function bindEvents() {
     log("Demo mode active. All trades are paper trades.");
   });
 
-  // AI apply button — sets both strategy AND best market
+  // AI apply button — sets strategy, market, trade type, and bot state
   const aiApplyBtn = $("aiApplyBtn");
   if (aiApplyBtn) aiApplyBtn.addEventListener("click", () => {
-    if (!st.aiRec) return;
-    const strat = st.aiRec.recommended;
+    if (!st.aiRec) { runMarketScan(); return; }
+    const strat = st.aiRec.recommended || "over123";
+    // Strategy radio + bot state
     document.querySelectorAll("input[name=botStrat]").forEach(r => { r.checked = r.value === strat; });
+    st.bot.strategy = strat;
+    // Trade type dropdown
+    const typeMap = { over123:"digits_ou", under876:"digits_ou", odd:"digits_eo", even:"digits_eo", hitrun:"digits_match" };
+    if (el.botTradeType) el.botTradeType.value = typeMap[strat] || "digits_ou";
+    // Market dropdown + bot state
     const bm = st.aiRec.bestMarket;
-    if (bm && el.botMarket) {
-      el.botMarket.value = bm.sym;
-      botLog(`AI applied: ${STRAT_LABELS[strat] || strat} on ${bm.name} (confidence ${st.aiRec.confidence}%)`, "signal");
+    if (bm) {
+      if (el.botMarket) el.botMarket.value = bm.sym;
+      st.bot.market = bm.sym;
+      botLog(`AI applied: ${STRAT_LABELS[strat] || strat} on ${bm.name} (${bm.score || st.aiRec.confidence}% confidence)`, "signal");
     } else {
-      botLog(`AI applied: ${STRAT_LABELS[strat] || strat} (confidence ${st.aiRec.confidence}%)`, "signal");
+      botLog(`AI applied: ${STRAT_LABELS[strat] || strat} (${st.aiRec.confidence}% confidence) — run scan for best market`, "signal");
     }
     updateBotFlow();
   });
@@ -1886,26 +1983,64 @@ function stopSessionTimer() {
   sessionTimer = null;
 }
 
-// ── SOUND ALERTS ─────────────────────────────────────────────
+// ── SOUND ALERTS (casino style) ──────────────────────────────
 function playSound(type) {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    gain.gain.setValueAtTime(0.18, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+    const t = ctx.currentTime;
+
     if (type === "win") {
-      osc.frequency.setValueAtTime(523, ctx.currentTime);
-      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
-      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.2);
+      // Slot machine jackpot: rapid ascending coin dings → triumphant chord
+      const coinFreqs = [784, 880, 988, 1047, 1175, 1319];
+      coinFreqs.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.connect(g); g.connect(ctx.destination);
+        osc.type = "square";
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(0.13, t + i * 0.07);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.14);
+        osc.start(t + i * 0.07);
+        osc.stop(t + i * 0.07 + 0.18);
+      });
+      // Triumphant C-major chord swell
+      [523, 659, 784, 1047].forEach(freq => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.connect(g); g.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(0, t + 0.52);
+        g.gain.linearRampToValueAtTime(0.09, t + 0.58);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+        osc.start(t + 0.52);
+        osc.stop(t + 1.55);
+      });
+
     } else {
-      osc.frequency.setValueAtTime(350, ctx.currentTime);
-      osc.frequency.setValueAtTime(280, ctx.currentTime + 0.18);
+      // Sad trombone: classic wah wah waaaah (4-note descending, sawtooth + filter)
+      const osc = ctx.createOscillator();
+      const filt = ctx.createBiquadFilter();
+      const g = ctx.createGain();
+      osc.connect(filt); filt.connect(g); g.connect(ctx.destination);
+      osc.type = "sawtooth";
+      filt.type = "bandpass";
+      filt.Q.value = 4;
+      // Pitch: Eb → Db → Bb → G (descending)
+      osc.frequency.setValueAtTime(311, t);
+      osc.frequency.linearRampToValueAtTime(277, t + 0.28);
+      osc.frequency.linearRampToValueAtTime(233, t + 0.55);
+      osc.frequency.linearRampToValueAtTime(185, t + 0.80);
+      // Filter wah sweep (brass "wah" resonance)
+      filt.frequency.setValueAtTime(900, t);
+      filt.frequency.linearRampToValueAtTime(350, t + 0.28);
+      filt.frequency.linearRampToValueAtTime(700, t + 0.55);
+      filt.frequency.linearRampToValueAtTime(200, t + 1.05);
+      g.gain.setValueAtTime(0.22, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 1.1);
+      osc.start(t);
+      osc.stop(t + 1.15);
     }
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.45);
   } catch(e) {}
 }
 
@@ -1967,7 +2102,12 @@ function updateBotFlow() {
 async function init() {
   await extractOauthToken();
   initTheme();
-  if (!st.token) showLanding();
+  if (st.token) {
+    hideLanding();
+    connectDeriv();
+  } else {
+    showLanding();
+  }
   el.appIdInput.value = st.appId;
   el.tokenInput.value = st.token;
   el.marketSelect.value = st.symbol;
@@ -1990,6 +2130,9 @@ async function init() {
 
   fetchCryptoPrices();
   setInterval(fetchCryptoPrices, 60000);
+
+  setTimeout(() => runMarketScan(), 3000);
+  setInterval(() => runMarketScan(), 15000);
 
   log("MoneyMaker Pro loaded. Demo stream active.");
 }
