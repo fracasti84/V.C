@@ -17,7 +17,7 @@ const CONTRACT_LABELS = {
 
 // ── STATE ───────────────────────────────────────────────────
 const st = {
-  appId: localStorage.getItem("mm.appId") || "1089",
+  appId: localStorage.getItem("mm.appId") || "33iZljc09mR2ZlLqP8QET",
   token: localStorage.getItem("mm.token") || "",
   markup: Number(localStorage.getItem("mm.markup") ?? 3),
   ws: null, wsReady: false, isAuthorized: false,
@@ -1612,10 +1612,8 @@ async function generatePKCE() {
 }
 
 function redirectToOAuth() {
-  // Read current input value before redirecting so typing a new ID takes effect
   const inputId = el.appIdInput?.value.trim();
   if (inputId) { st.appId = inputId; localStorage.setItem("mm.appId", inputId); }
-  // Standard Deriv third-party OAuth — returns token1/acct1/cur1 in redirect URL
   window.location.href = `https://oauth.deriv.com/oauth2/authorize?app_id=${encodeURIComponent(st.appId)}&l=EN&brand=deriv`;
 }
 
