@@ -957,36 +957,30 @@ function runBotEngine(price) {
   const b = st.bot;
   if (!b.running) return;
 
-  // heartbeat: log every 5 ticks so we know engine is running
-  b._hb = (b._hb || 0) + 1;
-  if (b._hb <= 3 || b._hb % 10 === 0) botLog(`Engine tick #${b._hb} price=${price?.toFixed(2)} market=${b.market}`, "signal");
-
   try {
     const dig = lastDig(price);
-    const w = windowTicks(b.market);
-    if (w.length < 10) {
-      botLog(`Waiting for ticks on ${b.market} (${w.length} so far)…`, "warn");
-      return;
-    }
+
+    // In demo mode the sim only feeds st.symbol — fall back if bot market has no data
+    const feedSym = (st.ticksAll[b.market]?.length >= 10) ? b.market : st.symbol;
+    const w = windowTicks(feedSym);
+    if (w.length < 10) return;
+
     const stats = computeDigitStats(w);
 
-    // settle pending trade
     if (b.pendingTrade) {
       settleBotTrade(b.pendingTrade, price, dig);
       return;
     }
 
-    // check stop conditions
     if (b.pl <= -b.lossLimit) {
-      botLog(`Loss limit hit ($${b.lossLimit}). Bot stopped.`,"warn");
+      botLog(`Loss limit hit ($${b.lossLimit}). Bot stopped.`, "warn");
       stopBot(); return;
     }
     if (b.pl >= b.targetProfit) {
-      botLog(`Target profit reached ($${b.targetProfit}). Bot stopped.`,"win");
+      botLog(`Target profit reached ($${b.targetProfit}). Bot stopped.`, "win");
       stopBot(); return;
     }
 
-    // AI Auto: auto-switch to best market every 20 ticks when idle
     if (b.strategy === "aiAuto" && !b.pendingTrade) {
       b._aiSwitchCooldown = (b._aiSwitchCooldown || 0) - 1;
       if (b._aiSwitchCooldown <= 0 && st.aiRec?.bestMarket) {
@@ -1005,7 +999,6 @@ function runBotEngine(price) {
 
   } catch(err) {
     botLog(`Bot engine error: ${err.message}`, "warn");
-    stopBot();
   }
 }
 
@@ -1564,6 +1557,7 @@ function startBot() {
   b.running = true;
   b.pendingTrade = null;
   b.entryWatch = null;
+  b._hb = 0;
   runMarketScan(); // refresh scan on every bot start
   el.botRunBtn.disabled = true;
   el.botStopBtn.disabled = false;
