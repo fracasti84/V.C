@@ -957,48 +957,55 @@ function runBotEngine(price) {
   const b = st.bot;
   if (!b.running) return;
 
-  const dig = lastDig(price);
-  const w = windowTicks(b.market);
-  if (w.length < 50) return;
-  const stats = computeDigitStats(w);
+  // heartbeat: log every 5 ticks so we know engine is running
+  b._hb = (b._hb || 0) + 1;
+  if (b._hb <= 3 || b._hb % 10 === 0) botLog(`Engine tick #${b._hb} price=${price?.toFixed(2)} market=${b.market}`, "signal");
 
-  // settle pending trade
-  if (b.pendingTrade) {
-    settleBotTrade(b.pendingTrade, price, dig);
-    return;
-  }
+  try {
+    const dig = lastDig(price);
+    const w = windowTicks(b.market);
+    if (w.length < 10) {
+      botLog(`Waiting for ticks on ${b.market} (${w.length} so far)…`, "warn");
+      return;
+    }
+    const stats = computeDigitStats(w);
 
-  // check stop conditions
-  if (b.pl <= -b.lossLimit) {
-    botLog(`Loss limit hit ($${b.lossLimit}). Bot stopped.`,"warn");
-    stopBot(); return;
-  }
-  if (b.pl >= b.targetProfit) {
-    botLog(`Target profit reached ($${b.targetProfit}). Bot stopped.`,"win");
-    stopBot(); return;
-  }
+    // settle pending trade
+    if (b.pendingTrade) {
+      settleBotTrade(b.pendingTrade, price, dig);
+      return;
+    }
 
-  // AI Auto: auto-switch to best market every 20 ticks when idle
-  if (b.strategy === "aiAuto" && !b.pendingTrade) {
-    b._aiSwitchCooldown = (b._aiSwitchCooldown || 0) - 1;
-    if (b._aiSwitchCooldown <= 0 && st.aiRec?.bestMarket) {
-      const bestSym = st.aiRec.bestMarket.sym;
-      if (bestSym !== b.market) {
-        b.market = bestSym;
-        b._aiSwitchCooldown = 20;
-        botLog(`AI switching market → ${st.aiRec.bestMarket.name} (${st.aiRec.confidence}% confidence)`, "signal");
-        updateBotFlow();
-        if (st.wsReady && bestSym !== st.symbol) {
-          send({ ticks: bestSym, subscribe: 1 });
+    // check stop conditions
+    if (b.pl <= -b.lossLimit) {
+      botLog(`Loss limit hit ($${b.lossLimit}). Bot stopped.`,"warn");
+      stopBot(); return;
+    }
+    if (b.pl >= b.targetProfit) {
+      botLog(`Target profit reached ($${b.targetProfit}). Bot stopped.`,"win");
+      stopBot(); return;
+    }
+
+    // AI Auto: auto-switch to best market every 20 ticks when idle
+    if (b.strategy === "aiAuto" && !b.pendingTrade) {
+      b._aiSwitchCooldown = (b._aiSwitchCooldown || 0) - 1;
+      if (b._aiSwitchCooldown <= 0 && st.aiRec?.bestMarket) {
+        const bestSym = st.aiRec.bestMarket.sym;
+        if (bestSym !== b.market) {
+          b.market = bestSym;
+          b._aiSwitchCooldown = 20;
+          botLog(`AI switching market → ${st.aiRec.bestMarket.name}`, "signal");
+          updateBotFlow();
+          if (st.wsReady && bestSym !== st.symbol) send({ ticks: bestSym, subscribe: 1 });
         }
       }
     }
-  }
 
-  // check if strategy conditions met — trade immediately
-  const stratOk = checkBotStrategy(b.strategy, stats, dig);
-  if (stratOk) {
     executeBotTrade(dig, stats);
+
+  } catch(err) {
+    botLog(`Bot engine error: ${err.message}`, "warn");
+    stopBot();
   }
 }
 
