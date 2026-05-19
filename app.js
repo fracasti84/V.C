@@ -1003,16 +1003,8 @@ function runBotEngine(price) {
 }
 
 function checkBotStrategy(strat, stats, dig) {
-  if (!st.bot.useStrategy || strat === "manual") return true;
-  switch (strat) {
-    case "over123": { const s=checkOver123(stats); return s==="ready"||s==="partial"; }
-    case "under876":{ const s=checkUnder876(stats); return s==="ready"||s==="partial"; }
-    case "odd":     { const s=checkOdd(stats);     return s==="ready"||s==="partial"; }
-    case "even":    { const s=checkEven(stats);     return s==="ready"||s==="partial"; }
-    case "hitrun":  { const hr=checkHitRun(stats); return hr.over!=="fail"||hr.under!=="fail"; }
-    case "aiAuto":  return st.aiRec ? st.aiRec.confidence >= 45 : false;
-    default: return true;
-  }
+  if (strat === "aiAuto") return st.aiRec ? st.aiRec.confidence >= 45 : false;
+  return true;
 }
 
 function buildEntryWatch(strat, currentDig, stats) {
@@ -1565,6 +1557,7 @@ function startBot() {
   b.running = true;
   b.pendingTrade = null;
   b.entryWatch = null;
+  runMarketScan(); // refresh scan on every bot start
   el.botRunBtn.disabled = true;
   el.botStopBtn.disabled = false;
   el.botStatusLabel.textContent = "Running";
