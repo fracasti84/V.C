@@ -1710,6 +1710,7 @@ function bindEvents() {
       btn.classList.add("active");
       $("tab-"+btn.dataset.tab)?.classList.add("active");
       st.currentTab = btn.dataset.tab;
+      localStorage.setItem("mm.tab", btn.dataset.tab);
       if (btn.dataset.tab==="journal") renderJournal();
     });
   });
@@ -1719,6 +1720,7 @@ function bindEvents() {
   const landingDemoBtn  = $("landingDemoBtn");
   if (landingOauthBtn) landingOauthBtn.addEventListener("click", () => redirectToOAuth());
   if (landingDemoBtn) landingDemoBtn.addEventListener("click", () => {
+    localStorage.setItem("mm.demo", "1");
     hideLanding();
     log("Demo mode active. All trades are paper trades.");
   });
@@ -1756,6 +1758,7 @@ function bindEvents() {
   if (el.disconnectBtn) el.disconnectBtn.addEventListener("click",()=>{
     st.token = ""; st.isAuthorized = false; st.loginId = "";
     localStorage.removeItem("mm.token");
+    localStorage.removeItem("mm.demo");
     disconnectDeriv(true);
     updateModeUi();
     showLanding();
@@ -2105,6 +2108,8 @@ async function init() {
   if (st.token) {
     hideLanding();
     connectDeriv();
+  } else if (localStorage.getItem("mm.demo") === "1") {
+    hideLanding();
   } else {
     showLanding();
   }
@@ -2114,6 +2119,19 @@ async function init() {
   updateFeeDisplay();
   updateMarketUi();
   updateModeUi();
+
+  // Restore last active tab
+  const savedTab = localStorage.getItem("mm.tab");
+  if (savedTab) {
+    const tabBtn = document.querySelector(`.nav-tab[data-tab="${savedTab}"]`);
+    if (tabBtn) {
+      document.querySelectorAll(".nav-tab").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-view").forEach(v => v.classList.remove("active"));
+      tabBtn.classList.add("active");
+      $("tab-" + savedTab)?.classList.add("active");
+      st.currentTab = savedTab;
+    }
+  }
 
   // init digit circles placeholder
   for (let d=0;d<10;d++) {
