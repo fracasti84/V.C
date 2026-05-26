@@ -8,5 +8,18 @@
     "directory": ".",
     "not_found_handling": "single-page-application"
   },
-  "compatibility_flags": ["nodejs_compat"]
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "moneymekapro-trades",
+      "database_id": "d5439722-7a48-4313-b508-7884597cfbbb"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "SIGNAL_CACHE",
+      "id": "aa5d234ca8c94f9a8cc10f544a2aa1f8"
+    }
+  ]
 }
